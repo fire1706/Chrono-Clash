@@ -1,6 +1,8 @@
 using ChronoClash.Core.Commands;
 using ChronoClash.Core.Formations;
+using ChronoClash.Game.Localization;
 using ChronoClash.Game.Net;
+using ChronoClash.Game.Settings;
 using ChronoClash.Game.Persistence;
 using Godot;
 
@@ -60,7 +62,7 @@ public partial class FormationEditor : Control
         column.AddThemeConstantOverride("separation", 12);
         panel.AddChild(column);
 
-        var title = new Label { Text = "Éditeur de formation" };
+        var title = new Label { Text = Loc.T("Éditeur de formation") };
         title.AddThemeFontSizeOverride("font_size", 24);
         column.AddChild(title);
 
@@ -69,7 +71,7 @@ public partial class FormationEditor : Control
         for (int i = 0; i < 4; i++)
         {
             int index = i;
-            _tabs[i] = MakeButton($"{i + 7 - (i == 3 ? 10 : 0)} · {_store.Names[i]}", () => SelectTab(index));
+            _tabs[i] = MakeButton($"{KeyBindings.LabelOf($"formation_{i + 1}")} · {Loc.T(_store.Names[i])}", () => SelectTab(index));
             _tabs[i].ToggleMode = true;
             tabs.AddChild(_tabs[i]);
         }
@@ -78,7 +80,7 @@ public partial class FormationEditor : Control
         body.AddThemeConstantOverride("separation", 20);
         column.AddChild(body);
         var gridBox = new VBoxContainer();
-        gridBox.AddChild(new Label { Text = "▲ Avant", HorizontalAlignment = HorizontalAlignment.Center });
+        gridBox.AddChild(new Label { Text = "▲ " + Loc.T("Avant"), HorizontalAlignment = HorizontalAlignment.Center });
         _grid = new FormationGridCanvas();
         _grid.Changed += () => _preview.Refresh(_grid.Cells, _session.LocalArmy.CountByKind());
         _grid.EditFinished += SendCurrent;
@@ -88,8 +90,8 @@ public partial class FormationEditor : Control
         var side = new VBoxContainer();
         side.AddThemeConstantOverride("separation", 8);
         body.AddChild(side);
-        side.AddChild(new Label { Text = "Pinceau" });
-        string[] brushNames = { "0 · Gomme", "1 · Guerriers", "2 · Distance", "3 · Tanks" };
+        side.AddChild(new Label { Text = Loc.T("Pinceau") });
+        string[] brushNames = { "0 · " + Loc.T("Gomme"), "1 · " + Loc.T("Guerriers"), "2 · " + Loc.T("Distance"), "3 · " + Loc.T("Tanks") };
         for (int b = 0; b < 4; b++)
         {
             byte value = (byte)b;
@@ -98,22 +100,22 @@ public partial class FormationEditor : Control
             if (b > 0) _brushes[b].AddThemeColorOverride("font_color", FormationGridCanvas.CellColors[b].Lightened(0.35f));
             side.AddChild(_brushes[b]);
         }
-        side.AddChild(new Label { Text = "Aperçu avec ton armée" });
+        side.AddChild(new Label { Text = Loc.T("Aperçu avec ton armée") });
         _preview = new FormationPreviewCanvas();
         side.AddChild(_preview);
         side.AddChild(new Label
         {
-            Text = "Clic gauche : peindre · clic droit : effacer\nLe dessin s'agrandit avec l'armée.",
+            Text = Loc.T("Clic gauche : peindre · clic droit : effacer") + "\n" + Loc.T("Le dessin s'agrandit avec l'armée."),
             Modulate = new Color(1, 1, 1, 0.65f),
         });
 
         var buttons = new HBoxContainer();
         buttons.AddThemeConstantOverride("separation", 10);
         column.AddChild(buttons);
-        buttons.AddChild(MakeButton("Effacer", () => { Array.Clear(_grid.Cells); AfterBulkEdit(); }));
-        buttons.AddChild(MakeButton("Dessin de départ", () => { _store.ResetToPreset(_editing); _grid.Cells = _store.Cells[_editing]; AfterBulkEdit(); }));
-        buttons.AddChild(MakeButton("Utiliser cette formation (Entrée)", UseAndClose));
-        buttons.AddChild(MakeButton("Fermer (Échap)", Close));
+        buttons.AddChild(MakeButton(Loc.T("Effacer"), () => { Array.Clear(_grid.Cells); AfterBulkEdit(); }));
+        buttons.AddChild(MakeButton(Loc.T("Dessin de départ"), () => { _store.ResetToPreset(_editing); _grid.Cells = _store.Cells[_editing]; AfterBulkEdit(); }));
+        buttons.AddChild(MakeButton(Loc.T("Utiliser cette formation (Entrée)"), UseAndClose));
+        buttons.AddChild(MakeButton(Loc.T("Fermer (Échap)"), Close));
     }
 
     private static Button MakeButton(string text, Action onPressed)
@@ -169,7 +171,7 @@ public partial class FormationEditor : Control
         _store.Current = _editing;
         _store.Save();
         _session.Send(new SelectFormationCommand(_session.World.Tick, _session.LocalPlayerId, _editing));
-        _hud.ShowChip($"Formation : {_store.Names[_editing]}");
+        _hud.ShowChip(Loc.F("Formation : {0}", Loc.T(_store.Names[_editing])));
         Close();
     }
 
@@ -183,11 +185,11 @@ public partial class FormationEditor : Control
             case Key.Key2: SetBrush(2); break;
             case Key.Key3: SetBrush(3); break;
             case Key.Key0: SetBrush(0); break;
-            case Key.Tab: SelectTab((_editing + (key.ShiftPressed ? 3 : 1)) % 4); break;
             case Key.Enter or Key.KpEnter: UseAndClose(); break;
             case Key.Escape: Close(); break;
             default:
-                if (key.Keycode == Key.F) Close();
+                if (key.IsActionPressed("formation_next")) SelectTab((_editing + (key.ShiftPressed ? 3 : 1)) % 4);
+                else if (key.IsActionPressed("formation_editor")) Close();
                 else return; // autre touche : on la laisse passer (caméra, etc.)
                 break;
         }

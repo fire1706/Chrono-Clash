@@ -47,7 +47,7 @@ public partial class EffectsLayer : Node2D
                 if (b.ArmyId != _session.LocalArmy.Id) break; // le texte seulement pour nos propres bulles
                 string text = b.Kind == BubbleKind.Star
                     ? $"+{b.Points} ★"
-                    : $"+1 {data.Stats((Core.Commands.TroopKind)(int)b.Kind, _session.LocalArmy.Era).Short} · +{b.Resources} ◆";
+                    : $"+1 {Localization.Loc.T(data.Stats((Core.Commands.TroopKind)(int)b.Kind, _session.LocalArmy.Era).Short)} · +{b.Resources} ◆";
                 _floats.Add((pos, text, color.Lightened(0.3f), 0));
                 break;
             }
@@ -55,12 +55,12 @@ public partial class EffectsLayer : Node2D
                 _floats.Add((new Vector2(d.X, d.Y - 14), d.Multiplier > 1 ? $"+{d.Points} ★ ×{d.Multiplier} !  +{d.Resources} ◆" : $"+{d.Points} ★  +{d.Resources} ◆", StarGold, 0));
                 break;
             case VeteranEvent v when v.ArmyId == _session.LocalArmy.Id:
-                _floats.Add((new Vector2(v.X, v.Y - 14), "Vétéran " + new string('★', v.Level), StarGold, 0));
+                _floats.Add((new Vector2(v.X, v.Y - 14), Localization.Loc.T("Vétéran") + " " + new string('★', v.Level), StarGold, 0));
                 break;
             case ProjectileImpactEvent p when p.Splash > 0 && _session.CanSee(new Core.Mathematics.Vec2(p.X, p.Y)):
                 _explosions.Add((new Vector2(p.X, p.Y), p.Splash, 0, p.Kind == "plasma"));
                 break;
-            case MeleeHitEvent m when _sparks.Count < 120:
+            case MeleeHitEvent m when _sparks.Count < 120 && !Settings.GameSettings.Current.LowQuality:
                 _sparks.Add((new Vector2(m.X, m.Y) + new Vector2(GD.Randf() * 6 - 3, GD.Randf() * 6 - 3), 0));
                 break;
             case TacticUsedEvent t when t.Tactic == Core.Commands.TacticKind.WarCry:
@@ -74,7 +74,7 @@ public partial class EffectsLayer : Node2D
                 break;
             case CrateCollectedEvent cc:
                 _bursts.Add((new Vector2(cc.X, cc.Y), StarGold, 50, 0));
-                if (cc.ArmyId == _session.LocalArmy.Id) _floats.Add((new Vector2(cc.X, cc.Y - 30), "+60 ◆  +40 ★  +4 troupes", StarGold, 0));
+                if (cc.ArmyId == _session.LocalArmy.Id) _floats.Add((new Vector2(cc.X, cc.Y - 30), Localization.Loc.T("+60 ◆  +40 ★  +4 troupes"), StarGold, 0));
                 break;
             case PortalUsedEvent pu:
                 _bursts.Add((new Vector2(pu.X, pu.Y), new Color(0.71f, 0.42f, 1f), 70, 0));
@@ -91,7 +91,7 @@ public partial class EffectsLayer : Node2D
             case TroopRecruitedEvent r when r.ArmyId == _session.LocalArmy.Id:
             {
                 var g = _session.LocalArmy.General.Position.ToGodot();
-                _floats.Add((g + new Vector2(0, -40), $"+1 {data.Stats(r.Kind, _session.LocalArmy.Era).Short}", Color.FromHtml(data.Troop(r.Kind).Color).Lightened(0.3f), 0));
+                _floats.Add((g + new Vector2(0, -40), $"+1 {Localization.Loc.T(data.Stats(r.Kind, _session.LocalArmy.Era).Short)}", Color.FromHtml(data.Troop(r.Kind).Color).Lightened(0.3f), 0));
                 break;
             }
         }

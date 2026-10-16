@@ -14,6 +14,10 @@ window/size/viewport_width=1600
 window/size/viewport_height=900
 window/stretch/mode="canvas_items"
 
+[audio]
+
+general/text_to_speech=true
+
 [dotnet]
 
 project/assembly_name="ChronoClash.Game"

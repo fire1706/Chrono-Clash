@@ -27,7 +27,7 @@ public partial class CorpseLayer : Node2D
 
     private void OnEvent(GameEvent e)
     {
-        if (e is not BodyDiedEvent d) return;
+        if (e is not BodyDiedEvent d || Settings.GameSettings.Current.LowQuality) return;
         var army = _session.World.Armies[d.ArmyId];
         bool big = d.IsChief || d.Kind == Core.Commands.TroopKind.Tank;
         _corpses.Add((new Vector2(d.X, d.Y), CoreConvert.ColorOf(army.ColorRgb), big, 0, GD.Randf() * Mathf.Tau));

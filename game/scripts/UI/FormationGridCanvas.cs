@@ -47,7 +47,7 @@ public partial class FormationGridCanvas : Control
         // Le chef au centre (case non modifiable).
         var center = (chiefCell + new Vector2(0.5f, 0.5f)) * CellPixels;
         DrawCircle(center, CellPixels * 0.36f, Color.FromHtml("#f0b52a"));
-        DrawString(ThemeDB.FallbackFont, center + new Vector2(-14, 5), "Chef", HorizontalAlignment.Center, 28, 10, new Color(0.15f, 0.1f, 0.05f));
+        DrawString(ThemeDB.FallbackFont, center + new Vector2(-14, 5), Localization.Loc.T("Chef"), HorizontalAlignment.Center, 28, 10, new Color(0.15f, 0.1f, 0.05f));
         // Flèche « avant » au-dessus de la grille.
         float midX = Size.X / 2;
         DrawColoredPolygon(new[] { new Vector2(midX, -18), new Vector2(midX - 9, -6), new Vector2(midX + 9, -6) }, new Color(1, 1, 1, 0.8f));

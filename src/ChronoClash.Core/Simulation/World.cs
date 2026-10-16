@@ -33,7 +33,7 @@ public sealed class World
         bool isQuick = settings.Mode == GameMode.Quick;
         TimeFactor = isQuick ? quick.TimeFactor : 1;
         EraFactor = isQuick ? quick.EraFactor : 1;
-        Grace = settings.Mode == GameMode.Sandbox ? float.MaxValue : isQuick ? MathF.Min(Difficulty.Grace, quick.Grace) : Difficulty.Grace;
+        Grace = settings.IsCalm ? float.MaxValue : isQuick ? MathF.Min(Difficulty.Grace, quick.Grace) : Difficulty.Grace;
         HuntRamp = isQuick ? quick.Ramp : Data.Tuning.Ai.Ramp;
 
         Neutral = new Army(-1, int.MinValue, "Neutre", 0x3B1D1D, isBot: false, new General(Vec2.Zero) { Dead = true }) { Alive = false };

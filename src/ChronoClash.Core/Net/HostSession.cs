@@ -30,11 +30,11 @@ public sealed class HostSession
 
     /// <param name="local">Bout « hôte » du transport local (le joueur de cette machine).</param>
     /// <param name="network">Transport réseau en écoute, ou null pour une partie solo.</param>
-    public HostSession(ITransport local, ITransport? network, string hostName, uint hostColor)
+    public HostSession(ITransport local, ITransport? network, string hostName, uint hostColor, int hostEmblem = 0)
     {
         _local = local;
         _network = network;
-        Players.Add(new LobbyPlayer { PlayerId = HostPlayerId, Name = hostName, Color = hostColor, IsHost = true });
+        Players.Add(new LobbyPlayer { PlayerId = HostPlayerId, Name = hostName, Color = hostColor, Emblem = hostEmblem, IsHost = true });
         if (_network != null)
         {
             _network.PeerDisconnected += OnPeerDisconnected;
@@ -77,8 +77,8 @@ public sealed class HostSession
     public Match StartMatch(MatchSettings settings)
     {
         Match = new Match(settings);
-        foreach (var p in Players) Match.AddArmy(p.PlayerId, p.Name, p.Color, isBot: false);
-        Match.AddBots();
+        foreach (var p in Players) Match.AddArmy(p.PlayerId, p.Name, p.Color, isBot: false)!.Emblem = p.Emblem;
+        if (settings.Mode != GameMode.Tutorial) Match.AddBots(); // le tutoriel se joue seul
         if (_network != null)
         {
             var start = new StartMessage
@@ -86,7 +86,7 @@ public sealed class HostSession
                 Settings = settings,
                 Roster = Match.World.Armies.Select(a => new RosterEntry
                 {
-                    ArmyId = a.Id, PlayerId = a.PlayerId, Name = a.Name, Color = a.ColorRgb, IsBot = a.IsBot, Personality = a.Brain?.Personality.Id,
+                    ArmyId = a.Id, PlayerId = a.PlayerId, Name = a.Name, Color = a.ColorRgb, IsBot = a.IsBot, Emblem = a.Emblem, Personality = a.Brain?.Personality.Id,
                 }).ToList(),
             };
             _network.Send(0, JsonMessage.Encode(MessageType.Start, start), reliable: true);
@@ -152,7 +152,7 @@ public sealed class HostSession
         int playerId = _nextPlayerId++;
         _networkPeers[peer] = playerId;
         string name = string.IsNullOrWhiteSpace(hello!.Name) ? $"Joueur {playerId}" : hello.Name.Trim()[..Math.Min(20, hello.Name.Trim().Length)];
-        Players.Add(new LobbyPlayer { PlayerId = playerId, Name = name, Color = hello.Color });
+        Players.Add(new LobbyPlayer { PlayerId = playerId, Name = name, Color = hello.Color, Emblem = Math.Clamp(hello.Emblem, 0, 7) });
         _network!.Send(peer, JsonMessage.Encode(MessageType.Welcome, new WelcomeMessage { PlayerId = playerId }), reliable: true);
         BroadcastLobby();
     }

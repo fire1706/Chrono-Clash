@@ -1,6 +1,8 @@
 using ChronoClash.Core.Commands;
 using ChronoClash.Core.Events;
+using ChronoClash.Game.Localization;
 using ChronoClash.Game.Net;
+using ChronoClash.Game.Settings;
 using ChronoClash.Game.Persistence;
 using Godot;
 
@@ -33,7 +35,7 @@ public partial class GameHud : Control
     private Label _zoneLabel = null!;
     private readonly Button[] _tactics = new Button[4];
     private static readonly string[] TacticNames = { "Charge", "Retrait", "Viser", "Cri de guerre" };
-    private static readonly string[] TacticKeys = { "1", "2", "3", "R" };
+    private static readonly string[] TacticActions = { "tactic_charge", "tactic_retreat", "tactic_aim", "tactic_cry" };
 
     public void Setup(GameSession session, FormationStore store, Action openEditor)
     {
@@ -123,7 +125,7 @@ public partial class GameHud : Control
         AddChild(_announce);
     }
 
-    /// <summary>Viser depuis le bouton : 300 px devant le chef (au clavier, la touche 3 vise le curseur).</summary>
+    /// <summary>Viser depuis le bouton : 300 px devant le chef (au clavier, la touche « Viser » vise le curseur).</summary>
     private void UseTacticFromButton(TacticKind kind)
     {
         var g = _session.LocalArmy.General;
@@ -137,116 +139,113 @@ public partial class GameHud : Control
         _announce.Text = text;
         _announceTime = 3f;
         _announceStays = stays;
+        Announced?.Invoke(text);
     }
 
-    private static string ModeName(Core.Simulation.GameMode m) => m switch
-    {
-        Core.Simulation.GameMode.Quick => "partie rapide",
-        Core.Simulation.GameMode.Sandbox => "bac à sable",
-        Core.Simulation.GameMode.Tutorial => "tutoriel",
-        _ => "partie classique",
-    };
+    /// <summary>Chaque grande annonce est aussi lue par l'annonceur (AudioManager s'y abonne).</summary>
+    public event Action<string>? Announced;
 
-    private static string DifficultyName(Core.Simulation.BotDifficulty d) => d switch
-    {
-        Core.Simulation.BotDifficulty.Easy => "bots faciles",
-        Core.Simulation.BotDifficulty.Hard => "bots difficiles",
-        _ => "bots normaux",
-    };
-
-    /// <summary>Affiche un message court au centre en haut de l'écran.</summary>
+    /// <summary>Affiche un message court au centre en haut de l'écran (texte déjà traduit).</summary>
     public void ShowChip(string text)
     {
         _chip.Text = text;
         _chipTime = 1.8f;
     }
 
+    /// <summary>Nom d'un clan tel qu'affiché (« Toi » pour le sien), traduit.</summary>
+    private string ClanName(int armyId)
+    {
+        var a = _session.World.Armies[armyId];
+        return a == _session.LocalArmy ? Loc.T("Toi") : Loc.T(a.Name);
+    }
+
     private void OnEvent(GameEvent e)
     {
         var data = _session.World.Data;
+        var me = _session.LocalArmy;
         switch (e)
         {
             case PathFailedEvent f when f.PlayerId == _session.LocalPlayerId:
-                ShowChip("Impossible d'aller là");
+                ShowChip(Loc.T("Impossible d'aller là"));
                 break;
             case BuyFailedEvent b when b.PlayerId == _session.LocalPlayerId:
-                ShowChip($"Pas assez de ressources : {b.Cost} ◆ nécessaires (tu en as {b.Have})");
+                ShowChip(Loc.F("Pas assez de ressources : {0} ◆ nécessaires (tu en as {1})", b.Cost, b.Have));
                 break;
             case TacticFailedEvent f when f.PlayerId == _session.LocalPlayerId:
-                ShowChip($"{TacticNames[(int)f.Tactic]} : {f.Reason}");
+                ShowChip($"{Loc.T(TacticNames[(int)f.Tactic])} : " + (f.Seconds > 0 ? Loc.F("encore {0} s de recharge", (int)MathF.Ceiling(f.Seconds)) : Loc.T(f.Reason)));
                 break;
-            case TacticUsedEvent t when t.ArmyId == _session.LocalArmy.Id:
+            case TacticUsedEvent t when t.ArmyId == me.Id:
                 ShowChip(t.Tactic switch
                 {
-                    TacticKind.Charge => $"Charge ! {t.Count} troupes foncent",
-                    TacticKind.Retreat => "Retrait !",
-                    TacticKind.Aim => "Toute l'armée vise ce point",
-                    _ => $"Cri de guerre ! {t.Count} troupes galvanisées",
+                    TacticKind.Charge => Loc.F("Charge ! {0} troupes foncent", t.Count),
+                    TacticKind.Retreat => Loc.T("Retrait !"),
+                    TacticKind.Aim => Loc.T("Toute l'armée vise ce point"),
+                    _ => Loc.F("Cri de guerre ! {0} troupes galvanisées", t.Count),
                 });
                 break;
-            case ChiefPromotedEvent p when p.ArmyId == _session.LocalArmy.Id:
-                ShowChip($"Ton chef est tombé : un {data.Stats(p.HeirKind, _session.LocalArmy.General.Era).Short.ToLower()} reprend le commandement !");
+            case ChiefPromotedEvent p when p.ArmyId == me.Id:
+                ShowChip(Loc.F("Ton chef est tombé : un {0} reprend le commandement !", Loc.T(data.Stats(p.HeirKind, me.General.Era).Short).ToLower()));
                 break;
-            case EraStartedEvent es when es.ArmyId == _session.LocalArmy.Id:
-                Announce($"Ton peuple entre dans {data.Eras[es.Era].To} !\n{data.Eras[es.Era].Years}");
+            case EraStartedEvent es when es.ArmyId == me.Id:
+                Announce(Loc.F("Ton peuple entre dans {0} !", Loc.T(data.Eras[es.Era].To)));
                 break;
-            case EraCompletedEvent ec when ec.ArmyId == _session.LocalArmy.Id:
-                ShowChip($"Évolution terminée : {data.Eras[ec.Era].Name}");
+            case EraCompletedEvent ec when ec.ArmyId == me.Id:
+                ShowChip(Loc.F("Évolution terminée : {0}", Loc.T(data.Eras[ec.Era].Name)));
                 break;
-            case ArmyEliminatedEvent el when el.ArmyId == _session.LocalArmy.Id:
-                Announce($"Ton clan a été éliminé — {_session.LocalArmy.Placement}e place\nF2 : nouvelle partie", stays: true);
+            case ArmyEliminatedEvent el when el.ArmyId == me.Id:
+                Announce(Loc.F("Ton clan a été éliminé — {0}e place", me.Placement));
                 break;
-            case ArmyEliminatedEvent el when el.KillerArmyId == _session.LocalArmy.Id:
-                Announce($"{_session.World.Armies[el.ArmyId].Name} éliminé !");
+            case ArmyEliminatedEvent el when el.KillerArmyId == me.Id:
+                Announce(Loc.F("{0} éliminé !", ClanName(el.ArmyId)));
                 break;
-            case ArmyEliminatedEvent el when _session.LocalArmy.Alive && el.ClansLeft == 3:
-                Announce("Plus que trois clans !");
+            case ArmyEliminatedEvent el when me.Alive && el.ClansLeft == 3:
+                Announce(Loc.T("Plus que trois clans !"));
                 break;
-            case ArmyEliminatedEvent el when _session.LocalArmy.Alive && el.ClansLeft == 2:
-                Announce("Duel final !");
+            case ArmyEliminatedEvent el when me.Alive && el.ClansLeft == 2:
+                Announce(Loc.T("Duel final !"));
                 break;
-            case MatchEndedEvent end when end.WinnerArmyId == _session.LocalArmy.Id:
-                Announce("Victoire !\nTon clan est le dernier debout — F2 : nouvelle partie", stays: true);
+            case MatchEndedEvent end when end.WinnerArmyId == me.Id:
+                Announce(Loc.T("Victoire !"), stays: true);
                 break;
-            case MatchEndedEvent end when !_session.LocalArmy.Alive && end.WinnerArmyId >= 0:
-                ShowChip($"{_session.World.Armies[end.WinnerArmyId].Name} remporte la partie");
+            case MatchEndedEvent end when !me.Alive && end.WinnerArmyId >= 0:
+                ShowChip(Loc.F("{0} remporte la partie", ClanName(end.WinnerArmyId)));
                 break;
             case ZoneShrinkingEvent:
-                Announce("La zone se resserre !");
+                Announce(Loc.T("La zone se resserre !"));
                 break;
             case BossSpawnedEvent boss:
-                Announce($"Un boss est apparu !\n{boss.Name}");
+                Announce(Loc.T("Un boss est apparu !") + "\n" + Loc.T(boss.Name));
                 break;
-            case BossKilledEvent bk when bk.KillerArmyId == _session.LocalArmy.Id:
-                Announce($"Géant terrassé !\n+{bk.Points} ★  +{bk.Resources} ◆");
+            case BossKilledEvent bk when bk.KillerArmyId == me.Id:
+                Announce(Loc.T("Géant terrassé !") + $"\n+{bk.Points} ★  +{bk.Resources} ◆");
                 break;
             case BossKilledEvent bk when bk.KillerArmyId >= 0:
-                ShowChip($"{_session.World.Armies[bk.KillerArmyId].Name} a terrassé {bk.Name}");
+                ShowChip(Loc.F("{0} a terrassé {1}", ClanName(bk.KillerArmyId), Loc.T(bk.Name)));
                 break;
             case CrateAnnouncedEvent:
-                ShowChip("Largage temporel dans 20 s : regarde la carte");
+                ShowChip(Loc.T("Largage temporel dans 20 s : regarde la carte"));
                 break;
-            case CrateCollectedEvent cc when cc.ArmyId == _session.LocalArmy.Id:
-                ShowChip("Largage récupéré : +60 ◆  +40 ★  +4 troupes");
+            case CrateCollectedEvent cc when cc.ArmyId == me.Id:
+                ShowChip(Loc.T("Largage récupéré : +60 ◆  +40 ★  +4 troupes"));
                 break;
-            case PortalUsedEvent pu when pu.ArmyId == _session.LocalArmy.Id:
-                ShowChip($"Portail temporel : {pu.Count} troupes passent à l'ère suivante");
+            case PortalUsedEvent pu when pu.ArmyId == me.Id:
+                ShowChip(Loc.F("Portail temporel : {0} troupes passent à l'ère suivante", pu.Count));
                 break;
-            case ShrineCapturedEvent sc when sc.ArmyId == _session.LocalArmy.Id:
-                ShowChip(sc.Kind switch
+            case ShrineCapturedEvent sc when sc.ArmyId == me.Id:
+                ShowChip(Loc.T(sc.Kind switch
                 {
                     Core.Entities.ShrineKind.Wind => "Sanctuaire du vent capturé : +15 % de vitesse",
                     Core.Entities.ShrineKind.Life => "Sanctuaire de vie capturé : tes troupes se soignent",
                     _ => "Sanctuaire de puissance capturé : +12 % de dégâts",
-                });
+                }));
                 break;
             case WorldEventStartedEvent we:
                 switch (we.Kind)
                 {
-                    case "meteors": Announce("Pluie de météores !"); break;
-                    case "storm": Announce("Orage : toutes les armées ralentissent"); break;
-                    case "stormEnd": ShowChip("L'orage se calme"); break;
-                    case "migration": Announce("Migration de bulles !"); break;
+                    case "meteors": Announce(Loc.T("Pluie de météores !")); break;
+                    case "storm": Announce(Loc.T("Orage : toutes les armées ralentissent")); break;
+                    case "stormEnd": ShowChip(Loc.T("L'orage se calme")); break;
+                    case "migration": Announce(Loc.T("Migration de bulles !")); break;
                 }
                 break;
         }
@@ -258,22 +257,26 @@ public partial class GameHud : Control
         var data = _session.World.Data;
         var counts = army.CountByKind();
         _resources.Text = $"◆ {army.Resources}     ★ {army.Points}";
-        _troops.Text = $"{counts[0] + counts[1] + counts[2]} troupes : {counts[0]} guerriers · {counts[1]} distance · {counts[2]} tanks\n{data.Eras[army.Era].Name} — chef : {(army.General.Dead ? "aucun" : army.General.Promoted ? "soldat promu" : data.Chiefs[army.General.Era].Name)}";
+        string chief = army.General.Dead ? Loc.T("aucun") : army.General.Promoted ? Loc.T("soldat promu") : Loc.T(data.Chiefs[army.General.Era].Name);
+        _troops.Text = Loc.F("{0} troupes : {1} guerriers · {2} distance · {3} tanks", counts[0] + counts[1] + counts[2], counts[0], counts[1], counts[2])
+                       + "\n" + Loc.F("{0} — chef : {1}", Loc.T(data.Eras[army.Era].Name), chief);
 
+        string[] buyActions = { "buy_warrior", "buy_ranged", "buy_tank" };
         for (int k = 0; k < 3; k++)
         {
             var kind = (TroopKind)k;
             int cost = data.Troop(kind).Cost;
-            _buy[k].Text = $"{k + 4} · {data.Stats(kind, army.Era).Short}\n{cost} ◆";
+            _buy[k].Text = $"{KeyBindings.LabelOf(buyActions[k])} · {Loc.T(data.Stats(kind, army.Era).Short)}\n{cost} ◆";
             _buy[k].Modulate = new Color(1, 1, 1, army.Resources >= cost ? 1f : 0.5f); // grisé si trop cher
         }
-        _formation.Text = $"F · Tab\nFormation : {_store.Names[army.FormationIndex]}";
+        _formation.Text = $"{KeyBindings.LabelOf("formation_editor")} · {KeyBindings.LabelOf("formation_next")}\n" + Loc.F("Formation : {0}", Loc.T(_store.Names[army.FormationIndex]));
 
         // Tactiques : nom, touche, et secondes de recharge restantes (bouton grisé pendant la recharge).
         for (int t = 0; t < 4; t++)
         {
             float cd = army.TacticCooldowns[t];
-            _tactics[t].Text = cd > 0 ? $"{TacticKeys[t]} · {TacticNames[t]}\n{cd:0} s" : $"{TacticKeys[t]} · {TacticNames[t]}\nprêt";
+            string head = $"{KeyBindings.LabelOf(TacticActions[t])} · {Loc.T(TacticNames[t])}";
+            _tactics[t].Text = cd > 0 ? $"{head}\n{cd:0} s" : $"{head}\n{Loc.T("prêt")}";
             _tactics[t].Modulate = new Color(1, 1, 1, cd > 0 ? 0.5f : 1f);
         }
 
@@ -281,30 +284,31 @@ public partial class GameHud : Control
         if (army.Evolution is { } evo)
         {
             float q = evo.Progress(data.Tuning.Evolution.Duration);
-            _eraLabel.Text = $"Évolution vers {data.Eras[evo.TargetEra].Short} : {q * 100:0} %";
+            _eraLabel.Text = Loc.F("Évolution vers {0} : {1} %", Loc.T(data.Eras[evo.TargetEra].Short), (int)(q * 100));
             _eraBar.Value = q;
         }
         else if (army.Era < Core.Entities.Army.MaxEra)
         {
             int from = _session.World.EraThreshold(army.Era), to = _session.World.EraThreshold(army.Era + 1);
-            _eraLabel.Text = $"{data.Eras[army.Era + 1].Short} dans {Math.Max(0, to - army.Points)} ★   ·   {army.Kills} ennemis abattus";
+            _eraLabel.Text = Loc.F("{0} dans {1} ★   ·   {2} ennemis abattus", Loc.T(data.Eras[army.Era + 1].Short), Math.Max(0, to - army.Points), army.Kills);
             _eraBar.Value = Math.Clamp((army.Points - from) / (double)(to - from), 0, 1);
         }
         else
         {
-            _eraLabel.Text = $"Dernière ère atteinte   ·   {army.Kills} ennemis abattus";
+            _eraLabel.Text = Loc.F("Dernière ère atteinte   ·   {0} ennemis abattus", army.Kills);
             _eraBar.Value = 1;
         }
 
         // Zone et clans en vie.
         var world = _session.World;
         float left = Core.Systems.ZoneSystem.TimeLeft(world);
-        string zone = world.Zone.Stage == Core.Simulation.ZoneStage.Final ? "Zone finale"
-            : left < 0 ? "Pas de zone (bac à sable)"
-            : world.Zone.Stage == Core.Simulation.ZoneStage.Waiting ? $"Zone : se resserre dans {(int)left / 60}:{(int)left % 60:00}"
-            : $"Zone : se resserre… {(int)left / 60}:{(int)left % 60:00}";
-        if (world.Zone.IsOutside(army.General.Position) && world.Zone.DamagePercent > 0 && !army.General.Dead) zone += "   — tu es HORS de la zone !";
-        _zoneLabel.Text = $"{zone}\n{world.Armies.Count(a => a.Alive && !a.IsPassive)} clans en vie   ·   {ModeName(world.Settings.Mode)} · {DifficultyName(world.Settings.Difficulty)}";
+        string time = $"{(int)left / 60}:{(int)left % 60:00}";
+        string zone = world.Zone.Stage == Core.Simulation.ZoneStage.Final ? Loc.T("Zone finale")
+            : left < 0 ? Loc.T("Pas de zone")
+            : world.Zone.Stage == Core.Simulation.ZoneStage.Waiting ? Loc.F("Zone : se resserre dans {0}", time)
+            : Loc.F("Zone : se resserre… {0}", time);
+        if (world.Zone.IsOutside(army.General.Position) && world.Zone.DamagePercent > 0 && !army.General.Dead) zone += "   " + Loc.T("— tu es HORS de la zone !");
+        _zoneLabel.Text = zone + "\n" + Loc.F("{0} clans en vie   ·   {1} · {2}", world.Armies.Count(a => a.Alive && !a.IsPassive), UiKit.ModeName(world.Settings.Mode), UiKit.DifficultyName(world.Settings.Difficulty));
 
         // Placement (l'écran peut changer de taille).
         var size = GetViewportRect().Size;

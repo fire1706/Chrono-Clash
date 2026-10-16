@@ -26,20 +26,20 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
 
 1. Ouvrir Godot .NET. Dans la **liste des projets**, cliquer sur **Importer** et choisir le fichier `game/project.godot` (et **pas** la racine du dépôt).
 2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
-3. L'écran d'accueil s'ouvre : choisis ton nom, ta couleur, les réglages, puis **Jouer seul**, **Héberger** ou **Rejoindre** (voir « Jouer à plusieurs » plus bas). En jeu :
+3. L'écran titre s'ouvre : **Tutoriel** pour apprendre, **Jouer** pour une partie (solo, héberger ou rejoindre, voir « Jouer à plusieurs »), **Réglages** pour la langue, le son et les touches. En jeu (touches par défaut, modifiables dans Réglages) :
    - **ZQSD** (AZERTY) / **WASD** (QWERTY) ou flèches : marcher · **Espace** maintenu : sprint · **X** : halte
    - **Clic droit** : aller à un point (maintenu = suivre la souris) · **Maj + clic droit** : ajouter une étape
    - **Molette** : zoom · **Y** : verrouiller/libérer la caméra · **C** : recentrer · **clic molette glissé** : déplacer la vue
    - **1** charge · **2** retrait · **3** viser (le curseur) · **R** cri de guerre
    - **4 / 5 / 6** : acheter un guerrier / une troupe à distance / un tank · **Tab** ou **7 8 9 0** : changer de formation · **F** : éditeur de formation
-   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **L** : classement
+   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **L** : classement · **Échap** : pause
    - **F8** : mode (classique / rapide / bac à sable) · **F9** : difficulté des bots · **F10** : brouillard de guerre
    - Tests : **F4** +20 troupes · **F6** clan ennemi immobile (**Maj + F6** : 2 ères d'avance) · **F7** +50 ★ · **F2** nouvelle carte · **F3** panneau technique
 
 ## Jouer à plusieurs
 
-1. **L'hôte** clique sur **Héberger une partie**. L'écran affiche son adresse IP locale (par exemple `192.168.1.20`).
-2. **Les amis** tapent cette adresse dans le champ à côté de **Rejoindre**, avec le même port (7777 par défaut), puis cliquent sur **Rejoindre**.
+1. **L'hôte** clique sur **Jouer**, puis **Héberger une partie**. L'écran affiche son adresse IP locale (par exemple `192.168.1.20`).
+2. **Les amis** cliquent sur **Jouer** et tapent cette adresse dans le champ à côté de **Rejoindre**, avec le même port (7777 par défaut), puis cliquent sur **Rejoindre**.
 3. Quand tout le monde est dans le salon, l'hôte clique sur **Lancer la partie**. Les places libres (jusqu'à 10 clans) sont prises par des bots.
 
 - **Sur le même réseau (même box)** : rien d'autre à faire.

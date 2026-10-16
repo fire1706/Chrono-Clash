@@ -16,11 +16,14 @@ public sealed class RemoteClient
     private readonly uint _color;
     private float _visionTimer;
 
-    public RemoteClient(ITransport transport, string name, uint color)
+    private readonly int _emblem;
+
+    public RemoteClient(ITransport transport, string name, uint color, int emblem = 0)
     {
         _transport = transport;
         _name = name;
         _color = color;
+        _emblem = emblem;
         _transport.PeerConnected += OnConnected;
         _transport.PeerDisconnected += _ => Disconnected?.Invoke();
     }
@@ -46,7 +49,7 @@ public sealed class RemoteClient
     private void OnConnected(int peer)
     {
         if (peer != ClientSession.HostPeerId) return;
-        _transport.Send(ClientSession.HostPeerId, JsonMessage.Encode(MessageType.Hello, new HelloMessage { Protocol = CoreInfo.ProtocolVersion, Name = _name, Color = _color }), reliable: true);
+        _transport.Send(ClientSession.HostPeerId, JsonMessage.Encode(MessageType.Hello, new HelloMessage { Protocol = CoreInfo.ProtocolVersion, Name = _name, Color = _color, Emblem = _emblem }), reliable: true);
     }
 
     /// <summary>Envoie un ordre à l'hôte (en mode fiable : un ordre ne doit pas se perdre).</summary>
@@ -102,6 +105,7 @@ public sealed class RemoteClient
         foreach (var entry in start.Roster.OrderBy(e => e.ArmyId))
         {
             var army = World.CreateArmy(entry.PlayerId, entry.Name, entry.Color, entry.IsBot);
+            army.Emblem = entry.Emblem;
             if (entry.Personality != null) army.Brain = new AI.BotBrain(World.Data.Bots.Personality(entry.Personality), float.MaxValue); // pour l'affichage seulement
         }
         MatchStarted?.Invoke();

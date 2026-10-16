@@ -33,6 +33,12 @@ public partial class GameSession : Node
 
     public SessionMode Mode { get; private set; }
 
+    /// <summary>Réglages de la dernière partie solo (pour « Rejouer »).</summary>
+    public static MatchSettings? LastSoloSettings { get; private set; }
+
+    /// <summary>Pause (solo seulement) : la simulation ne tourne plus.</summary>
+    public bool Paused { get; set; }
+
     /// <summary>Le salon a changé, la partie commence, une erreur réseau (message à afficher).</summary>
     public event Action? LobbyChanged;
     public event Action? MatchStarted;
@@ -65,20 +71,21 @@ public partial class GameSession : Node
     // ================= Démarrer =================
 
     /// <summary>Partie hors ligne : ton clan contre 9 bots.</summary>
-    public void StartSolo(MatchSettings settings, string playerName, uint colorRgb)
+    public void StartSolo(MatchSettings settings, string playerName, uint colorRgb, int emblem = 0)
     {
-        CreateLocalHost(null, playerName, colorRgb);
+        LastSoloSettings = settings;
+        CreateLocalHost(null, playerName, colorRgb, emblem);
         Mode = SessionMode.Solo;
         _host!.StartMatch(settings);
         MatchStarted?.Invoke();
     }
 
     /// <summary>Héberger : ouvre le salon d'attente. Renvoie un message d'erreur, ou null si tout va bien.</summary>
-    public string? StartHost(int port, string playerName, uint colorRgb)
+    public string? StartHost(int port, string playerName, uint colorRgb, int emblem = 0)
     {
         _network = EnetTransport.Host(port, out string error);
         if (_network == null) return error;
-        CreateLocalHost(_network, playerName, colorRgb);
+        CreateLocalHost(_network, playerName, colorRgb, emblem);
         _host!.LobbyChanged += () => LobbyChanged?.Invoke();
         Mode = SessionMode.Host;
         LobbyChanged?.Invoke();
@@ -86,11 +93,11 @@ public partial class GameSession : Node
     }
 
     /// <summary>Rejoindre l'hôte à cette adresse. Renvoie un message d'erreur, ou null si la connexion est lancée.</summary>
-    public string? Join(string address, int port, string playerName, uint colorRgb)
+    public string? Join(string address, int port, string playerName, uint colorRgb, int emblem = 0)
     {
         _network = EnetTransport.Join(address, port, out string error);
         if (_network == null) return error;
-        _remote = new RemoteClient(_network, playerName, colorRgb);
+        _remote = new RemoteClient(_network, playerName, colorRgb, emblem);
         _remote.LobbyChanged += () => LobbyChanged?.Invoke();
         _remote.MatchStarted += () => MatchStarted?.Invoke();
         _remote.Rejected += reason => { NetworkError?.Invoke($"Connexion refusée : {reason}"); Leave(); };
@@ -101,10 +108,10 @@ public partial class GameSession : Node
         return null;
     }
 
-    private void CreateLocalHost(ITransport? network, string playerName, uint colorRgb)
+    private void CreateLocalHost(ITransport? network, string playerName, uint colorRgb, int emblem)
     {
         var (hostEnd, clientEnd) = LocalTransport.CreatePair();
-        _host = new HostSession(hostEnd, network, playerName, colorRgb);
+        _host = new HostSession(hostEnd, network, playerName, colorRgb, emblem);
         _host.BindLocalPeer(clientEnd.LocalPeerId, SoloPlayerId);
         _localClient = new ClientSession(clientEnd, SoloPlayerId);
     }
@@ -170,6 +177,7 @@ public partial class GameSession : Node
             return;
         }
         if (_host == null) return;
+        if (Paused && Mode == SessionMode.Solo) return; // en pause, le temps s'arrête (en solo seulement)
         _host.Update(delta);
         if (_host.Match != null) foreach (var e in _host.Match.Events) EventRaised?.Invoke(e);
     }

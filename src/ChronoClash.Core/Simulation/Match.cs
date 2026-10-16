@@ -64,6 +64,7 @@ public sealed class Match
         {
             var clan = bots.Clans[i];
             var army = AddArmy(100 + i, clan.Name, clan.ColorRgb, isBot: true)!;
+            army.Emblem = i % 8;
             army.Brain = new BotBrain(bots.Personality(pool[i % pool.Count]), (float)World.Random.NextDouble());
         }
     }

@@ -32,7 +32,7 @@ public static class ZoneSystem
     /// <summary>Durées de la phase selon le mode (partie rapide : ×0,32 ; bac à sable : jamais).</summary>
     private static (float Wait, float Shrink) Durations(World world, Data.ZonePhase phase)
     {
-        if (world.Settings.Mode == GameMode.Sandbox) return (float.MaxValue, phase.Shrink);
+        if (world.Settings.IsCalm) return (float.MaxValue, phase.Shrink);
         float f = world.Settings.Mode == GameMode.Quick ? world.Data.Tuning.QuickMode.ZoneFactor : 1;
         return (MathF.Round(phase.Wait * f), MathF.Round(phase.Shrink * f));
     }

@@ -46,6 +46,6 @@ public partial class FormationPreviewCanvas : Control
                 DrawCircle(center + new Vector2(s.Y, -s.X) * scale, radius, FormationGridCanvas.CellColors[kind + 1]);
         }
         DrawCircle(center, 5, Color.FromHtml("#f0b52a"));
-        DrawString(ThemeDB.FallbackFont, new Vector2(6, Size.Y - 8), $"{_counts[0] + _counts[1] + _counts[2]} troupes · ×{_layout.Scale:0.0}", HorizontalAlignment.Left, -1, 12, new Color(1, 1, 1, 0.7f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(6, Size.Y - 8), Localization.Loc.F("{0} troupes · ×{1:0.0}", _counts[0] + _counts[1] + _counts[2], _layout.Scale), HorizontalAlignment.Left, -1, 12, new Color(1, 1, 1, 0.7f));
     }
 }

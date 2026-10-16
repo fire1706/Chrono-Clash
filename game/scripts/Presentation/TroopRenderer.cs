@@ -31,7 +31,7 @@ public partial class TroopRenderer : Node2D
         float zoom = _camera.Zoom.X;
         var view = VisibleWorldRect(80);
         float alpha = _session.Alpha;
-        bool simple = zoom < SimpleDrawZoom;
+        bool simple = zoom < SimpleDrawZoom || Settings.GameSettings.Current.LowQuality;
         foreach (var army in _session.World.Armies)
         {
             if (!army.Alive) continue;

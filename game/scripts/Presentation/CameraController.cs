@@ -78,16 +78,15 @@ public partial class CameraController : Camera2D
                 ZoomAt(wheelDown.Position, 1 / ZoomStep); GetViewport().SetInputAsHandled(); break;
             case InputEventMouseButton { ButtonIndex: MouseButton.Middle } middle:
                 _dragging = middle.Pressed;
-                if (middle.Pressed && Locked) { Locked = false; Notify?.Invoke("Caméra libre"); }
+                if (middle.Pressed && Locked) { Locked = false; Notify?.Invoke(Localization.Loc.T("Caméra libre")); }
                 GetViewport().SetInputAsHandled();
                 break;
             case InputEventMouseMotion motion when _dragging:
                 Position -= motion.Relative / Zoom.X;
                 break;
             case InputEventKey { Pressed: true, Echo: false } key:
-                // Touches « logiques » : la lettre affichée sur le clavier (fonctionne en AZERTY comme en QWERTY).
-                if (key.Keycode == Key.Y) { Locked = !Locked; Notify?.Invoke(Locked ? "Caméra verrouillée sur le chef" : "Caméra libre"); }
-                else if (key.Keycode == Key.C) { Locked = true; Position = _renderer.DisplayPosition(_session.LocalArmy.General); Notify?.Invoke("Caméra recentrée"); }
+                if (key.IsActionPressed("camera_lock")) { Locked = !Locked; Notify?.Invoke(Localization.Loc.T(Locked ? "Caméra verrouillée sur le chef" : "Caméra libre")); }
+                else if (key.IsActionPressed("camera_center")) { Locked = true; Position = _renderer.DisplayPosition(_session.LocalArmy.General); Notify?.Invoke(Localization.Loc.T("Caméra recentrée")); }
                 break;
         }
     }

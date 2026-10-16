@@ -35,7 +35,7 @@ public static class TacticSystem
         if (!army.Alive || g.Dead) return false;
         if (army.TacticCooldowns[(int)kind] > 0)
         {
-            events.Add(new TacticFailedEvent(world.Tick, army.PlayerId, kind, $"encore {army.TacticCooldowns[(int)kind]:0} s de recharge"));
+            events.Add(new TacticFailedEvent(world.Tick, army.PlayerId, kind, "recharge", army.TacticCooldowns[(int)kind]));
             return false;
         }
         var forward = Vec2.FromAngle(army.FormationAngle);

@@ -39,7 +39,7 @@ public sealed record EraCompletedEvent(long Tick, int ArmyId, int Era) : GameEve
 public sealed record TacticUsedEvent(long Tick, int ArmyId, Commands.TacticKind Tactic, int Count, float X, float Y) : GameEvent(Tick);
 
 /// <summary>Une tactique n'a pas pu être lancée (encore en recharge, pas de troupe adaptée…).</summary>
-public sealed record TacticFailedEvent(long Tick, int PlayerId, Commands.TacticKind Tactic, string Reason) : GameEvent(Tick);
+public sealed record TacticFailedEvent(long Tick, int PlayerId, Commands.TacticKind Tactic, string Reason, float Seconds = 0) : GameEvent(Tick);
 
 /// <summary>Une troupe gagne un chevron de vétéran.</summary>
 public sealed record VeteranEvent(long Tick, int ArmyId, float X, float Y, int Level) : GameEvent(Tick);

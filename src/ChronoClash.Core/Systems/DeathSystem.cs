@@ -97,7 +97,7 @@ public static class DeathSystem
     /// <summary>Fin de partie : quand il ne reste qu'un clan (sur au moins deux au départ), il gagne.</summary>
     public static void CheckMatchEnd(World world, List<GameEvent> events)
     {
-        if (world.IsOver || world.Armies.Count < 2) return;
+        if (world.IsOver || world.Armies.Count(a => !a.IsPassive) < 2) return; // il faut au moins deux vrais clans (pas en tutoriel)
         var alive = world.Armies.Where(a => a.Alive && !a.IsPassive).ToList();
         if (alive.Count > 1) return;
         world.IsOver = true;

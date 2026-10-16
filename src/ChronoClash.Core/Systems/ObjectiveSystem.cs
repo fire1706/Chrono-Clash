@@ -57,6 +57,7 @@ public static class ObjectiveSystem
 
     public static void Update(World world, float dt, List<GameEvent> events)
     {
+        if (world.Settings.Mode == GameMode.Tutorial) return; // le tutoriel garde une carte simple
         var tuning = world.Data.Tuning.Objectives;
         UpdateBonuses(world);
         UpdateCrate(world, dt, events);

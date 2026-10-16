@@ -21,7 +21,7 @@ public static class EventSystem
     public static void Update(World world, float dt, List<GameEvent> events)
     {
         var t = world.Data.Tuning.Events;
-        if (world.Settings.Mode != GameMode.Sandbox)
+        if (!world.Settings.IsCalm)
         {
             world.EventTimer -= dt;
             if (world.EventTimer <= 0)

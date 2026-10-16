@@ -35,6 +35,8 @@ public sealed class Army
     public string Name { get; set; }
     /// <summary>Couleur du clan en hexadécimal RVB, par exemple 0xF0B52A pour l'or.</summary>
     public uint ColorRgb { get; set; }
+    /// <summary>Emblème du clan (0 à 7 : soleil, lune, étoile, couronne, épées, crâne, arbre, flamme).</summary>
+    public int Emblem { get; set; }
     public bool IsBot { get; set; }
     /// <summary>Clan de test qui ne bouge pas (touche F6). Les bots l'ignorent pour réfléchir.</summary>
     public bool IsPassive { get; set; }

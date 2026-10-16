@@ -7,6 +7,9 @@ public enum BotDifficulty { Easy, Normal, Hard }
 /// <summary>Réglages choisis avant la partie (écran titre ou salon d'attente).</summary>
 public sealed record MatchSettings
 {
+    /// <summary>Vrai pour les modes « calmes » : pas de zone, pas d'événements, bots pacifiques (bac à sable, tutoriel).</summary>
+    public bool IsCalm => Mode is GameMode.Sandbox or GameMode.Tutorial;
+
     /// <summary>Nombre de clans par partie : les places non prises par des humains sont complétées par des bots.</summary>
     public const int MaxClans = 10;
 

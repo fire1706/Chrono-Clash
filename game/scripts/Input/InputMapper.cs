@@ -2,6 +2,7 @@ using ChronoClash.Core.Commands;
 using ChronoClash.Game.Net;
 using ChronoClash.Game.Persistence;
 using ChronoClash.Game.Presentation;
+using ChronoClash.Game.Localization;
 using ChronoClash.Game.UI;
 using Godot;
 
@@ -17,7 +18,7 @@ namespace ChronoClash.Game.Input;
 /// 4/5/6 = acheter guerrier/distance/tank · Tab = formation suivante · 7/8/9/0 = choisir une formation ·
 /// F = éditeur de formation.
 /// Tests : F4 = +20 troupes · F6 = clan ennemi immobile (Maj + F6 : 2 ères d'avance) · F7 = +50 ★.
-/// À l'étape M6, ces touches deviendront personnalisables (écran Réglages).
+/// Toutes ces touches sont personnalisables dans Réglages (actions Godot définies par Settings/KeyBindings).
 /// </summary>
 public partial class InputMapper : Node
 {
@@ -56,12 +57,13 @@ public partial class InputMapper : Node
     {
         // ----- Direction au clavier (bloquée pendant l'édition de formation) -----
         var dir = Vector2.Zero;
-        if (!_editor.IsOpen)
+        if (!_editor.IsOpen && !_session.Paused)
         {
-            if (Godot.Input.IsPhysicalKeyPressed(Key.D) || Godot.Input.IsKeyPressed(Key.Right)) dir.X += 1;
-            if (Godot.Input.IsPhysicalKeyPressed(Key.A) || Godot.Input.IsKeyPressed(Key.Left)) dir.X -= 1;
-            if (Godot.Input.IsPhysicalKeyPressed(Key.S) || Godot.Input.IsKeyPressed(Key.Down)) dir.Y += 1;
-            if (Godot.Input.IsPhysicalKeyPressed(Key.W) || Godot.Input.IsKeyPressed(Key.Up)) dir.Y -= 1;
+            // Actions configurables dans Réglages (les flèches marchent toujours en plus).
+            if (Godot.Input.IsActionPressed("move_right")) dir.X += 1;
+            if (Godot.Input.IsActionPressed("move_left")) dir.X -= 1;
+            if (Godot.Input.IsActionPressed("move_down")) dir.Y += 1;
+            if (Godot.Input.IsActionPressed("move_up")) dir.Y -= 1;
         }
         if (dir != _lastDirection)
         {
@@ -71,7 +73,7 @@ public partial class InputMapper : Node
         }
 
         // ----- Sprint -----
-        bool sprint = !_editor.IsOpen && Godot.Input.IsPhysicalKeyPressed(Key.Space);
+        bool sprint = !_editor.IsOpen && !_session.Paused && Godot.Input.IsActionPressed("sprint");
         if (sprint != _lastSprint)
         {
             _lastSprint = sprint;
@@ -104,7 +106,7 @@ public partial class InputMapper : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_editor.IsOpen) return;
+        if (_editor.IsOpen || _session.Paused) return;
         switch (@event)
         {
             case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } click:
@@ -127,44 +129,37 @@ public partial class InputMapper : Node
     private void OnKey(InputEventKey key)
     {
         // Achats : la répétition (touche maintenue) est autorisée pour acheter vite.
-        switch (key.PhysicalKeycode)
-        {
-            case Key.Key4: Buy(TroopKind.Warrior); return;
-            case Key.Key5: Buy(TroopKind.Ranged); return;
-            case Key.Key6: Buy(TroopKind.Tank); return;
-        }
+        if (key.IsActionPressed("buy_warrior", true)) { Buy(TroopKind.Warrior); return; }
+        if (key.IsActionPressed("buy_ranged", true)) { Buy(TroopKind.Ranged); return; }
+        if (key.IsActionPressed("buy_tank", true)) { Buy(TroopKind.Tank); return; }
         if (key.Echo) return;
-        switch (key.PhysicalKeycode)
+        if (key.IsActionPressed("tactic_charge")) Tactic(TacticKind.Charge);
+        else if (key.IsActionPressed("tactic_retreat")) Tactic(TacticKind.Retreat);
+        else if (key.IsActionPressed("tactic_aim")) Tactic(TacticKind.Aim);
+        else if (key.IsActionPressed("tactic_cry")) Tactic(TacticKind.WarCry);
+        else if (key.IsActionPressed("formation_1")) SelectFormation(0);
+        else if (key.IsActionPressed("formation_2")) SelectFormation(1);
+        else if (key.IsActionPressed("formation_3")) SelectFormation(2);
+        else if (key.IsActionPressed("formation_4")) SelectFormation(3);
+        else if (key.IsActionPressed("formation_next")) { SelectFormation((_store.Current + (key.ShiftPressed ? 3 : 1)) % 4); GetViewport().SetInputAsHandled(); }
+        else if (key.IsActionPressed("stop")) _session.Send(new StopCommand(Tick, Player));
+        else if (key.IsActionPressed("formation_editor")) _editor.Open();
+        // Touches de test (fixes, refusées par l'hôte en multijoueur).
+        else if (key.Keycode == Key.F4)
         {
-            case Key.Key1: Tactic(TacticKind.Charge); return;
-            case Key.Key2: Tactic(TacticKind.Retreat); return;
-            case Key.Key3: Tactic(TacticKind.Aim); return;
-            case Key.Key7: SelectFormation(0); return;
-            case Key.Key8: SelectFormation(1); return;
-            case Key.Key9: SelectFormation(2); return;
-            case Key.Key0: SelectFormation(3); return;
-            case Key.Tab: SelectFormation((_store.Current + (key.ShiftPressed ? 3 : 1)) % 4); GetViewport().SetInputAsHandled(); return;
+            _session.Send(new DebugSpawnTroopsCommand(Tick, Player, _session.World.Data.Tuning.Debug.SpawnTroopsCount));
+            _hud.ShowChip(Loc.T("Test : +20 troupes"));
         }
-        switch (key.Keycode)
+        else if (key.Keycode == Key.F6)
         {
-            case Key.X: _session.Send(new StopCommand(Tick, Player)); break;
-            case Key.R: Tactic(TacticKind.WarCry); break;
-            case Key.F6:
-            {
-                int count = _session.World.Data.Tuning.Debug.EnemyTroopsCount;
-                _session.Send(new DebugSpawnEnemyCommand(Tick, Player, count, key.ShiftPressed ? 2 : 0));
-                _hud.ShowChip(key.ShiftPressed ? "Test : clan ennemi avec 2 ères d'avance" : "Test : clan ennemi devant toi");
-                break;
-            }
-            case Key.F7:
-                _session.Send(new DebugAddPointsCommand(Tick, Player, _session.World.Data.Tuning.Debug.AddPoints));
-                _hud.ShowChip($"Test : +{_session.World.Data.Tuning.Debug.AddPoints} ★");
-                break;
-            case Key.F: _editor.Open(); break;
-            case Key.F4:
-                _session.Send(new DebugSpawnTroopsCommand(Tick, Player, _session.World.Data.Tuning.Debug.SpawnTroopsCount));
-                _hud.ShowChip("Test : +20 troupes");
-                break;
+            int count = _session.World.Data.Tuning.Debug.EnemyTroopsCount;
+            _session.Send(new DebugSpawnEnemyCommand(Tick, Player, count, key.ShiftPressed ? 2 : 0));
+            _hud.ShowChip(Loc.T(key.ShiftPressed ? "Test : clan ennemi avec 2 ères d'avance" : "Test : clan ennemi devant toi"));
+        }
+        else if (key.Keycode == Key.F7)
+        {
+            _session.Send(new DebugAddPointsCommand(Tick, Player, _session.World.Data.Tuning.Debug.AddPoints));
+            _hud.ShowChip(Loc.F("Test : +{0} ★", _session.World.Data.Tuning.Debug.AddPoints));
         }
     }
 
@@ -182,6 +177,6 @@ public partial class InputMapper : Node
         _store.Current = index;
         _store.Save();
         _session.Send(new SelectFormationCommand(Tick, Player, index));
-        _hud.ShowChip($"Formation : {_store.Names[index]}");
+        _hud.ShowChip(Loc.F("Formation : {0}", Loc.T(_store.Names[index])));
     }
 }

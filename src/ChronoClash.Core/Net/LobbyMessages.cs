@@ -11,6 +11,7 @@ public sealed class LobbyPlayer
     public int PlayerId { get; set; }
     public string Name { get; set; } = "";
     public uint Color { get; set; }
+    public int Emblem { get; set; }
     public bool IsHost { get; set; }
 }
 
@@ -19,6 +20,7 @@ public sealed class HelloMessage
     public int Protocol { get; set; }
     public string Name { get; set; } = "";
     public uint Color { get; set; }
+    public int Emblem { get; set; }
 }
 
 public sealed class WelcomeMessage
@@ -45,6 +47,7 @@ public sealed class RosterEntry
     public string Name { get; set; } = "";
     public uint Color { get; set; }
     public bool IsBot { get; set; }
+    public int Emblem { get; set; }
     public string? Personality { get; set; }
 }
 

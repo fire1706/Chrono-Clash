@@ -202,12 +202,16 @@ public partial class ArmyRenderer : Node2D
     private void DrawNameTag(Army army, Vector2 pos, bool isLocal, float zoom)
     {
         var font = ThemeDB.FallbackFont;
-        string label = (isLocal ? "Toi" : army.Name) + (army.Evolution != null ? " · évolution" : "");
+        string label = (isLocal ? Localization.Loc.T("Toi") : Localization.Loc.T(army.Name)) + (army.Evolution != null ? " · " + Localization.Loc.T("évolution") : "");
         const int fontSize = 13;
         float width = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize).X + 14;
         // On se place au-dessus du chef puis on annule le zoom pour dessiner « en pixels d'écran ».
         DrawSetTransform(pos + new Vector2(0, -30 - 14 / zoom), 0, new Vector2(1 / zoom, 1 / zoom));
         DrawRect(new Rect2(-width / 2, -9, width, 18), new Color(0.08f, 0.06f, 0.04f, 0.78f));
+        // Bannière avec l'emblème du clan, à gauche de l'étiquette.
+        var banner = new Color(0.08f, 0.06f, 0.04f, 0.9f);
+        DrawRect(new Rect2(-width / 2 - 22, -11, 20, 22), banner);
+        Emblems.Draw(this, army.Emblem, new Vector2(-width / 2 - 12, 0), 8, CoreConvert.ColorOf(army.ColorRgb), banner);
         DrawString(font, new Vector2(-width / 2, 5), label, HorizontalAlignment.Center, width, fontSize, CoreConvert.ColorOf(army.ColorRgb));
         // Barres : vie (vert) et endurance (jaune).
         var g = army.General;
