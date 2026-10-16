@@ -1,0 +1,51 @@
+# Chrono Clash
+
+Battle royale de stratégie en temps réel : dix clans, huit ères, de la préhistoire au futur, un seul survivant.
+Version Godot 4 en C#, avec un mode solo contre des bots et un mode multijoueur jusqu'à 10 joueurs (un joueur héberge la partie).
+
+L'architecture est décrite dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). La façon de travailler à plusieurs est dans [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Versions utilisées par toute l'équipe
+
+| Outil | Version |
+|---|---|
+| Godot | **4.7.2, édition .NET** (fichier `Godot_v4.7.2-stable_mono_win64`) |
+| SDK .NET | **8** (ou plus récent) |
+| Git LFS | dernière version |
+
+Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait pas exécuter le C#**.
+
+## Installation (à faire une seule fois)
+
+1. Installer le **SDK .NET 8** depuis le site officiel de Microsoft (dotnet.microsoft.com), puis redémarrer l'ordinateur.
+2. Télécharger **Godot 4.7.2 édition .NET** depuis godotengine.org : il faut choisir le bouton « .NET ». Le dossier s'appelle `Godot_v4.7.2-stable_mono_win64`.
+3. Installer **GitHub Desktop** (desktop.github.com). Git LFS est inclus.
+4. Cloner le dépôt avec GitHub Desktop : *File → Clone repository*.
+
+## Lancer le jeu
+
+1. Ouvrir Godot .NET, cliquer sur **Importer** et choisir le fichier `game/project.godot`.
+2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
+3. Étape M0 : une fenêtre affiche « Chrono Clash » avec un compteur de ticks qui avance. Si les chiffres avancent, tout est bien installé.
+
+## Lancer les tests et le serveur (optionnel)
+
+Dans un terminal, à la racine du dépôt :
+
+```
+dotnet test tests/ChronoClash.Core.Tests
+dotnet run --project src/ChronoClash.Server
+```
+
+Les tests tournent aussi automatiquement sur GitHub à chaque envoi (onglet **Actions**).
+
+## Structure
+
+```
+src/ChronoClash.Core     cœur du jeu en C# pur (aucune dépendance à Godot)
+src/ChronoClash.Server   futur serveur dédié, sans affichage
+tests/                   tests automatiques du cœur
+game/                    projet Godot : affichage, son, menus, contrôles, réseau
+data/                    règles du jeu en JSON (troupes, ères, équilibrage)
+docs/                    documentation de l'équipe
+```

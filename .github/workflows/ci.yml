@@ -1,0 +1,21 @@
+# Compile le cœur et lance les tests automatiquement à chaque envoi sur GitHub.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false   # inutile de télécharger les images et les sons pour tester le cœur
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Tests du cœur
+        run: dotnet test tests/ChronoClash.Core.Tests/ChronoClash.Core.Tests.csproj --configuration Release
+      - name: Compilation du serveur sans affichage
+        run: dotnet build src/ChronoClash.Server/ChronoClash.Server.csproj --configuration Release

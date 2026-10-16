@@ -1,0 +1,58 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoClash.Core", "src\ChronoClash.Core\ChronoClash.Core.csproj", "{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoClash.Server", "src\ChronoClash.Server\ChronoClash.Server.csproj", "{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoClash.Core.Tests", "tests\ChronoClash.Core.Tests\ChronoClash.Core.Tests.csproj", "{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoClash.Game", "game\ChronoClash.Game.csproj", "{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C01}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C02}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C03}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{6F1B2C3D-4E5F-4A6B-9C7D-1E2F3A4B5C04}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,12 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <!-- Projet Godot : affichage, son, menus, contrôles et transport réseau. Toute la logique est dans ChronoClash.Core. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>ChronoClash.Game</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\ChronoClash.Core\ChronoClash.Core.csproj" />
+  </ItemGroup>
+</Project>

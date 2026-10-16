@@ -1,3 +1,17 @@
-# Godot 4+ specific ignores
+# Godot
 .godot/
-/android/
+*.translation
+export_credentials.cfg
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+mono_crash.*
+TestResults/
+# OS
+.DS_Store
+Thumbs.db

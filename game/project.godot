@@ -1,0 +1,25 @@
+; Fichier de configuration du projet Godot.
+
+config_version=5
+
+[application]
+
+config/name="Chrono Clash"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+
+[dotnet]
+
+project/assembly_name="ChronoClash.Game"
+project/solution_directory="../"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
