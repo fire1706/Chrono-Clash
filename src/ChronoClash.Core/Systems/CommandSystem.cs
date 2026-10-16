@@ -1,5 +1,6 @@
 using ChronoClash.Core.Commands;
 using ChronoClash.Core.Events;
+using ChronoClash.Core.Formations;
 using ChronoClash.Core.Mathematics;
 using ChronoClash.Core.Simulation;
 
@@ -8,7 +9,8 @@ namespace ChronoClash.Core.Systems;
 /// <summary>
 /// Applique les ordres reçus pendant ce tick (humains ou bots).
 /// C'est le SEUL endroit où les ordres des joueurs modifient le monde :
-/// pour ajouter un nouvel ordre, on crée son type dans Commands/ et on le traite ici.
+/// pour ajouter un nouvel ordre, on crée son type dans Commands/, on l'ajoute à Net/CommandCodec.cs et on le traite ici.
+/// Les ordres sont toujours vérifiés : un ordre invalide est ignoré, jamais une cause de plantage.
 /// </summary>
 public static class CommandSystem
 {
@@ -34,7 +36,8 @@ public static class CommandSystem
                     break;
                 }
                 case DirectionCommand dir:
-                    g.InputDirection = new Vec2(dir.Dx, dir.Dy);
+                    // On borne la direction : un client ne peut pas demander une « super vitesse ».
+                    g.InputDirection = new Vec2(MathUtil.Clamp(dir.Dx, -1, 1), MathUtil.Clamp(dir.Dy, -1, 1));
                     break;
                 case StopCommand:
                     g.Path.Clear();
@@ -42,7 +45,22 @@ public static class CommandSystem
                 case SprintCommand sprint:
                     g.WantsSprint = sprint.On;
                     break;
-                // Les autres ordres (tactiques, achats, formations) arrivent aux étapes M2 et M3.
+                case BuyCommand buy when Enum.IsDefined(buy.Kind):
+                    Recruitment.TryBuy(world, army, buy.Kind, events);
+                    break;
+                case SelectFormationCommand select when select.Index >= 0 && select.Index < Entities.Army.FormationCount:
+                    army.FormationIndex = select.Index;
+                    army.SlotsDirty = true;
+                    break;
+                case SetFormationCellsCommand set when set.Index >= 0 && set.Index < Entities.Army.FormationCount && FormationTemplate.IsValid(set.Cells):
+                    Array.Copy(set.Cells, army.Formations[set.Index].Cells, FormationTemplate.CellCount);
+                    army.Formations[set.Index].Cells[FormationTemplate.ChiefRow * FormationTemplate.Columns + FormationTemplate.ChiefColumn] = 0; // la case du chef reste vide
+                    if (set.Index == army.FormationIndex) army.SlotsDirty = true;
+                    break;
+                case DebugSpawnTroopsCommand debug when world.Settings.AllowCheats:
+                    Recruitment.SpawnTestTroops(world, army, Math.Clamp(debug.Count, 1, 100));
+                    break;
+                // Les tactiques (charge, retrait, visée, cri de guerre) arrivent à l'étape M3.
             }
         }
     }

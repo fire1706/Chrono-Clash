@@ -1,0 +1,13 @@
+// Les huit ères. threshold = points ★ nécessaires pour y entrer (étape M3).
+{
+  "eras": [
+    { "name": "Ère préhistorique",        "short": "Préhistoire", "threshold": 0,    "years": "−10 000" },
+    { "name": "Ère romaine",              "short": "Rome",        "threshold": 60,   "years": "−50" },
+    { "name": "Ère médiévale",            "short": "Moyen Âge",   "threshold": 150,  "years": "1200" },
+    { "name": "Renaissance",              "short": "Renaissance", "threshold": 260,  "years": "1500" },
+    { "name": "Première Guerre mondiale", "short": "14-18",       "threshold": 460,  "years": "1914" },
+    { "name": "Seconde Guerre mondiale",  "short": "39-45",       "threshold": 760,  "years": "1940" },
+    { "name": "Ère moderne",              "short": "Moderne",     "threshold": 1200, "years": "2025" },
+    { "name": "Ère futuriste",            "short": "Futur",       "threshold": 1800, "years": "2200" }
+  ]
+}

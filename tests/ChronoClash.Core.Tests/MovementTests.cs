@@ -87,6 +87,7 @@ public class MovementTests
             new TacticCommand(4, 6, TacticKind.Aim, 10, 20),
             new BuyCommand(5, 7, TroopKind.Tank),
             new SelectFormationCommand(6, 8, 3),
+            new DebugSpawnTroopsCommand(8, 1, 20),
         };
         foreach (var c in commands) Assert.Equal(c, CommandCodec.Decode(CommandCodec.Encode(c)));
         var cells = new SetFormationCellsCommand(7, 9, 2, new byte[] { 0, 1, 2, 3 });

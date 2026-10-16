@@ -21,6 +21,7 @@ public sealed class Match
     {
         Settings = settings;
         World = new World(settings);
+        BubbleSystem.SpawnInitial(World);
         _events.Add(new MatchStartedEvent(0));
     }
 
@@ -84,7 +85,12 @@ public sealed class Match
         CommandSystem.Apply(World, _commandsThisTick, _events);   // 1. ordres des joueurs
         // 2. bots (M4)
         GeneralMovementSystem.Update(World, dt);                    // 3. déplacement des chefs
-        // 4+. formations, troupes, combat, ères, zone… (M2 à M4)
+        FormationSystem.Update(World);                              // 4. places dans la formation
+        UnitMovementSystem.Update(World, dt);                       // 5. déplacement des troupes (+ grille spatiale)
+        // 6-8. combat, projectiles, morts (M3)
+        // 9. évolution des ères (M3)
+        BubbleSystem.Update(World, dt, _events);                    // 10. bulles : apparition et ramassage
+        // 11-14. objectifs, zone, vision, score (M4)
 
         World.Tick++;
     }

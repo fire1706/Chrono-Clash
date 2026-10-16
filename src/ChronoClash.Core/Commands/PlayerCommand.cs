@@ -19,3 +19,6 @@ public sealed record BuyCommand(long Tick, int PlayerId, TroopKind Kind) : Playe
 
 public sealed record SelectFormationCommand(long Tick, int PlayerId, int Index) : PlayerCommand(Tick, PlayerId);
 public sealed record SetFormationCellsCommand(long Tick, int PlayerId, int Index, byte[] Cells) : PlayerCommand(Tick, PlayerId);
+
+/// <summary>Test : ajoute des troupes autour du chef. Refusé par l'hôte si la partie n'autorise pas les triches.</summary>
+public sealed record DebugSpawnTroopsCommand(long Tick, int PlayerId, int Count) : PlayerCommand(Tick, PlayerId);

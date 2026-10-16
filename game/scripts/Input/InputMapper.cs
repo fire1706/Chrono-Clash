@@ -1,6 +1,8 @@
 using ChronoClash.Core.Commands;
 using ChronoClash.Game.Net;
+using ChronoClash.Game.Persistence;
 using ChronoClash.Game.Presentation;
+using ChronoClash.Game.UI;
 using Godot;
 
 namespace ChronoClash.Game.Input;
@@ -11,8 +13,9 @@ namespace ChronoClash.Game.Input;
 ///
 /// Déplacement : ZQSD en AZERTY / WASD en QWERTY (touches « physiques » : même position sur tous les claviers)
 /// ou flèches · Clic droit = aller à un point (maintenu = suivre la souris) · Maj + clic droit = ajouter une étape ·
-/// Espace maintenu = sprint · X = halte.
-/// À l'étape M6, ces touches deviendront personnalisables (InputMap de Godot + écran Réglages).
+/// Espace maintenu = sprint · X = halte · 4/5/6 = acheter guerrier/distance/tank · Tab = formation suivante ·
+/// 7/8/9/0 = choisir une formation · F = éditeur de formation · F4 = +20 troupes (test).
+/// À l'étape M6, ces touches deviendront personnalisables (écran Réglages).
 /// </summary>
 public partial class InputMapper : Node
 {
@@ -24,6 +27,9 @@ public partial class InputMapper : Node
     private GameSession _session = null!;
     private CameraController _camera = null!;
     private ArmyRenderer _renderer = null!;
+    private FormationEditor _editor = null!;
+    private FormationStore _store = null!;
+    private GameHud _hud = null!;
 
     private Vector2 _lastDirection;
     private bool _lastSprint;
@@ -31,11 +37,14 @@ public partial class InputMapper : Node
     private float _followTimer;
     private Vector2 _lastFollowTarget;
 
-    public void Setup(GameSession session, CameraController camera, ArmyRenderer renderer)
+    public void Setup(GameSession session, CameraController camera, ArmyRenderer renderer, FormationEditor editor, FormationStore store, GameHud hud)
     {
         _session = session;
         _camera = camera;
         _renderer = renderer;
+        _editor = editor;
+        _store = store;
+        _hud = hud;
     }
 
     private long Tick => _session.World.Tick;
@@ -43,12 +52,15 @@ public partial class InputMapper : Node
 
     public override void _Process(double delta)
     {
-        // ----- Direction au clavier -----
+        // ----- Direction au clavier (bloquée pendant l'édition de formation) -----
         var dir = Vector2.Zero;
-        if (Godot.Input.IsPhysicalKeyPressed(Key.D) || Godot.Input.IsKeyPressed(Key.Right)) dir.X += 1;
-        if (Godot.Input.IsPhysicalKeyPressed(Key.A) || Godot.Input.IsKeyPressed(Key.Left)) dir.X -= 1;
-        if (Godot.Input.IsPhysicalKeyPressed(Key.S) || Godot.Input.IsKeyPressed(Key.Down)) dir.Y += 1;
-        if (Godot.Input.IsPhysicalKeyPressed(Key.W) || Godot.Input.IsKeyPressed(Key.Up)) dir.Y -= 1;
+        if (!_editor.IsOpen)
+        {
+            if (Godot.Input.IsPhysicalKeyPressed(Key.D) || Godot.Input.IsKeyPressed(Key.Right)) dir.X += 1;
+            if (Godot.Input.IsPhysicalKeyPressed(Key.A) || Godot.Input.IsKeyPressed(Key.Left)) dir.X -= 1;
+            if (Godot.Input.IsPhysicalKeyPressed(Key.S) || Godot.Input.IsKeyPressed(Key.Down)) dir.Y += 1;
+            if (Godot.Input.IsPhysicalKeyPressed(Key.W) || Godot.Input.IsKeyPressed(Key.Up)) dir.Y -= 1;
+        }
         if (dir != _lastDirection)
         {
             _lastDirection = dir;
@@ -57,7 +69,7 @@ public partial class InputMapper : Node
         }
 
         // ----- Sprint -----
-        bool sprint = Godot.Input.IsPhysicalKeyPressed(Key.Space);
+        bool sprint = !_editor.IsOpen && Godot.Input.IsPhysicalKeyPressed(Key.Space);
         if (sprint != _lastSprint)
         {
             _lastSprint = sprint;
@@ -90,6 +102,7 @@ public partial class InputMapper : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (_editor.IsOpen) return;
         switch (@event)
         {
             case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } click:
@@ -103,9 +116,48 @@ public partial class InputMapper : Node
                 GetViewport().SetInputAsHandled();
                 break;
             }
-            case InputEventKey { Pressed: true, Echo: false, Keycode: Key.X }:
-                _session.Send(new StopCommand(Tick, Player));
+            case InputEventKey { Pressed: true } key:
+                OnKey(key);
                 break;
         }
+    }
+
+    private void OnKey(InputEventKey key)
+    {
+        // Achats : la répétition (touche maintenue) est autorisée pour acheter vite.
+        switch (key.PhysicalKeycode)
+        {
+            case Key.Key4: Buy(TroopKind.Warrior); return;
+            case Key.Key5: Buy(TroopKind.Ranged); return;
+            case Key.Key6: Buy(TroopKind.Tank); return;
+        }
+        if (key.Echo) return;
+        switch (key.PhysicalKeycode)
+        {
+            case Key.Key7: SelectFormation(0); return;
+            case Key.Key8: SelectFormation(1); return;
+            case Key.Key9: SelectFormation(2); return;
+            case Key.Key0: SelectFormation(3); return;
+            case Key.Tab: SelectFormation((_store.Current + (key.ShiftPressed ? 3 : 1)) % 4); GetViewport().SetInputAsHandled(); return;
+        }
+        switch (key.Keycode)
+        {
+            case Key.X: _session.Send(new StopCommand(Tick, Player)); break;
+            case Key.F: _editor.Open(); break;
+            case Key.F4:
+                _session.Send(new DebugSpawnTroopsCommand(Tick, Player, _session.World.Data.Tuning.Debug.SpawnTroopsCount));
+                _hud.ShowChip("Test : +20 troupes");
+                break;
+        }
+    }
+
+    private void Buy(TroopKind kind) => _session.Send(new BuyCommand(Tick, Player, kind));
+
+    private void SelectFormation(int index)
+    {
+        _store.Current = index;
+        _store.Save();
+        _session.Send(new SelectFormationCommand(Tick, Player, index));
+        _hud.ShowChip($"Formation : {_store.Names[index]}");
     }
 }

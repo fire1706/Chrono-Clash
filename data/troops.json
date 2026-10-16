@@ -1,0 +1,72 @@
+// Troupes et chefs de Chrono Clash. Les // commentaires sont autorisés dans ces fichiers.
+// Après une modification, il suffit de recompiler (marteau dans Godot) : les fichiers sont intégrés au cœur du jeu.
+//
+// Pour chaque type de troupe :
+//   cost        prix d'achat en ressources ◆
+//   gain        ressources ◆ données par une bulle de ce type
+//   spawnWeight fréquence des bulles de ce type (sur 100)
+//   spacing     écart entre deux troupes de ce type dans une formation (pixels)
+//   radius      rayon de collision (pixels)
+//   bubbleRadius rayon de la bulle sur la carte
+//   points      ★ gagnés en tuant une troupe de ce type (étape M3)
+//   eras        statistiques à chaque ère, de 0 (Préhistoire) à 7 (Futur) :
+//               hp vie, damage dégâts, cooldown secondes entre deux attaques, range portée (0 = corps à corps),
+//               speed vitesse (pixels/s), aggro distance de détection, projectile et splash (dégâts de zone)
+{
+  "troops": [
+    {
+      "kind": "Warrior", "color": "#d9532f", "cost": 12, "gain": 4, "spawnWeight": 62, "spacing": 17, "radius": 6.5, "bubbleRadius": 12, "points": 1,
+      "eras": [
+        { "name": "Guerrier à massue",       "short": "Guerrier",     "hp": 34,  "damage": 6,  "cooldown": 0.9,  "range": 0,   "speed": 182, "aggro": 115 },
+        { "name": "Légionnaire",             "short": "Légionnaire",  "hp": 60,  "damage": 10, "cooldown": 0.85, "range": 0,   "speed": 178, "aggro": 115 },
+        { "name": "Paysan combattant",       "short": "Paysan",       "hp": 92,  "damage": 15, "cooldown": 0.85, "range": 0,   "speed": 182, "aggro": 120 },
+        { "name": "Mousquetaire à rapière",  "short": "Mousquetaire", "hp": 125, "damage": 22, "cooldown": 0.9,  "range": 0,   "speed": 186, "aggro": 125 },
+        { "name": "Fantassin à baïonnette",  "short": "Fantassin",    "hp": 165, "damage": 32, "cooldown": 1.0,  "range": 90,  "speed": 180, "aggro": 150, "projectile": "bullet" },
+        { "name": "Fantassin à mitraillette","short": "Fantassin",    "hp": 210, "damage": 33, "cooldown": 0.8,  "range": 100, "speed": 184, "aggro": 160, "projectile": "bullet" },
+        { "name": "Soldat d'assaut",         "short": "Assaut",       "hp": 265, "damage": 39, "cooldown": 0.75, "range": 115, "speed": 188, "aggro": 175, "projectile": "bullet" },
+        { "name": "Soldat en exosquelette",  "short": "Exosquelette", "hp": 340, "damage": 48, "cooldown": 0.7,  "range": 0,   "speed": 205, "aggro": 150 }
+      ]
+    },
+    {
+      "kind": "Ranged", "color": "#2a8fcc", "cost": 18, "gain": 6, "spawnWeight": 29, "spacing": 17, "radius": 6, "bubbleRadius": 12, "points": 2,
+      "eras": [
+        { "name": "Frondeur",          "short": "Frondeur",    "hp": 24,  "damage": 12,  "cooldown": 1.5,  "range": 225, "speed": 188, "aggro": 225, "projectile": "stone" },
+        { "name": "Archer romain",     "short": "Archer",      "hp": 36,  "damage": 19,  "cooldown": 1.4,  "range": 260, "speed": 185, "aggro": 260, "projectile": "arrow" },
+        { "name": "Archer à arc long", "short": "Arc long",    "hp": 48,  "damage": 26,  "cooldown": 1.4,  "range": 305, "speed": 182, "aggro": 305, "projectile": "arrow" },
+        { "name": "Arquebusier",       "short": "Arquebusier", "hp": 64,  "damage": 38,  "cooldown": 2.2,  "range": 290, "speed": 180, "aggro": 310, "projectile": "ball" },
+        { "name": "Mitrailleur",       "short": "Mitrailleur", "hp": 84,  "damage": 8.5, "cooldown": 0.35, "range": 300, "speed": 170, "aggro": 320, "projectile": "bullet" },
+        { "name": "Tireur au bazooka", "short": "Bazooka",     "hp": 95,  "damage": 46,  "cooldown": 2.6,  "range": 320, "speed": 178, "aggro": 340, "projectile": "rocket", "splash": 30 },
+        { "name": "Sniper",            "short": "Sniper",      "hp": 110, "damage": 60,  "cooldown": 2.6,  "range": 420, "speed": 180, "aggro": 440, "projectile": "bullet" },
+        { "name": "Tireur plasma",     "short": "Plasma",      "hp": 140, "damage": 52,  "cooldown": 1.6,  "range": 360, "speed": 190, "aggro": 380, "projectile": "plasma", "splash": 20 }
+      ]
+    },
+    {
+      "kind": "Tank", "color": "#8a55d6", "cost": 32, "gain": 9, "spawnWeight": 9, "spacing": 36, "radius": 15, "bubbleRadius": 16, "points": 5,
+      "eras": [
+        { "name": "Mammouth",                 "short": "Mammouth",      "hp": 150,  "damage": 11,  "cooldown": 1.3, "range": 0,   "speed": 128, "aggro": 105 },
+        { "name": "Char romain",              "short": "Char",          "hp": 230,  "damage": 17,  "cooldown": 1.1, "range": 0,   "speed": 172, "aggro": 120 },
+        { "name": "Catapulte",                "short": "Catapulte",     "hp": 340,  "damage": 30,  "cooldown": 3.6, "range": 300, "speed": 92,  "aggro": 320, "projectile": "rock", "splash": 42 },
+        { "name": "Tank de Léonard de Vinci", "short": "Tank de Vinci", "hp": 470,  "damage": 24,  "cooldown": 1.2, "range": 200, "speed": 96,  "aggro": 220, "projectile": "ball" },
+        { "name": "Char Mark I",              "short": "Mark I",        "hp": 640,  "damage": 30,  "cooldown": 1.4, "range": 240, "speed": 82,  "aggro": 260, "projectile": "bullet" },
+        { "name": "Char moyen",               "short": "Char moyen",    "hp": 850,  "damage": 60,  "cooldown": 2.0, "range": 300, "speed": 120, "aggro": 320, "projectile": "shell", "splash": 34 },
+        { "name": "Char de combat moderne",   "short": "Char moderne",  "hp": 1100, "damage": 85,  "cooldown": 1.8, "range": 340, "speed": 140, "aggro": 360, "projectile": "shell", "splash": 38 },
+        { "name": "Mécha bipède",             "short": "Mécha",         "hp": 1450, "damage": 110, "cooldown": 1.6, "range": 280, "speed": 130, "aggro": 300, "projectile": "plasma", "splash": 40 }
+      ]
+    }
+  ],
+
+  // Le chef de chaque ère. speedMultiplier multiplie la vitesse de marche du chef ; reach = allonge au corps à corps.
+  "chiefs": [
+    { "name": "Chef de clan",         "hp": 240,  "damage": 14, "cooldown": 0.8,  "speedMultiplier": 1.0 },
+    { "name": "Centurion",            "hp": 360,  "damage": 20, "cooldown": 0.75, "speedMultiplier": 1.05 },
+    { "name": "Chevalier",            "hp": 520,  "damage": 28, "cooldown": 0.7,  "speedMultiplier": 1.22, "reach": 22 },
+    { "name": "Condottiere",          "hp": 720,  "damage": 38, "cooldown": 0.65, "speedMultiplier": 1.25, "reach": 22 },
+    { "name": "Officier",             "hp": 950,  "damage": 26, "cooldown": 0.5,  "speedMultiplier": 1.05, "range": 220, "projectile": "bullet" },
+    { "name": "Général en jeep",      "hp": 1250, "damage": 34, "cooldown": 0.4,  "speedMultiplier": 1.45, "range": 240, "projectile": "bullet" },
+    { "name": "Commando d'élite",     "hp": 1600, "damage": 45, "cooldown": 0.35, "speedMultiplier": 1.15, "range": 260, "projectile": "bullet" },
+    { "name": "Champion énergétique", "hp": 2100, "damage": 80, "cooldown": 0.5,  "speedMultiplier": 1.3,  "range": 240, "projectile": "plasma", "splash": 26 }
+  ],
+
+  // Les étoiles dorées sur la carte : elles donnent des points ★.
+  "star": { "color": "#f2c94c", "bubbleRadius": 13, "points": 5 }
+}

@@ -7,4 +7,9 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>ChronoClash.Core</RootNamespace>
   </PropertyGroup>
+  <!-- Les fichiers de données (dossier data/ à la racine du dépôt) sont intégrés dans le cœur :
+       le jeu, le serveur et les tests les trouvent toujours, sans chemin de fichier à configurer. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\*.json" LogicalName="ChronoClash.Data.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

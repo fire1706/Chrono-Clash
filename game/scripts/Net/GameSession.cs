@@ -35,7 +35,7 @@ public partial class GameSession : Node
     /// <summary>Événements de la simulation (son, interface, annonceur s'y abonnent).</summary>
     public event Action<GameEvent>? EventRaised;
 
-    /// <summary>Démarre une partie hors ligne. (M1 : un seul clan, le tien. Les bots arrivent à M4.)</summary>
+    /// <summary>Démarre une partie hors ligne. (Pour l'instant un seul clan, le tien. Les bots arrivent à l'étape M4.)</summary>
     public void StartSolo(MatchSettings settings, string playerName, uint colorRgb)
     {
         Match = new Match(settings);
@@ -45,6 +45,17 @@ public partial class GameSession : Node
         _host = new HostSession(Match, hostEnd);
         _host.BindPeer(clientEnd.LocalPeerId, SoloPlayerId);
         _client = new ClientSession(clientEnd, SoloPlayerId);
+    }
+
+    /// <summary>
+    /// Envoie à l'hôte les 4 formations dessinées par le joueur et celle qu'il utilise.
+    /// À appeler juste après le démarrage de la partie.
+    /// </summary>
+    public void SendFormations(Persistence.FormationStore store)
+    {
+        for (int i = 0; i < 4; i++)
+            Send(new SetFormationCellsCommand(World.Tick, LocalPlayerId, i, (byte[])store.Cells[i].Clone()));
+        Send(new SelectFormationCommand(World.Tick, LocalPlayerId, store.Current));
     }
 
     /// <summary>Envoie un ordre du joueur local à l'hôte.</summary>

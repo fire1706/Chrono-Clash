@@ -87,6 +87,24 @@ public partial class Minimap : Control
         var center = _camera.GetScreenCenterPosition();
         DrawRect(new Rect2(ToMap(center - viewSize / 2), viewSize * Scale), new Color(1, 1, 1, 0.9f), false, 1.5f);
 
+        // Bulles (les étoiles et les tanks un peu plus gros).
+        var data = _session.World.Data;
+        foreach (var b in _session.World.Bubbles)
+        {
+            var color = b.Kind == Core.Entities.BubbleKind.Star ? Color.FromHtml(data.Star.Color) : Color.FromHtml(data.Troop((Core.Commands.TroopKind)(int)b.Kind).Color);
+            float size = b.Kind is Core.Entities.BubbleKind.Star or Core.Entities.BubbleKind.Tank ? 2.2f : 1.3f;
+            DrawRect(new Rect2(ToMap(b.Position.ToGodot()) - new Vector2(size / 2, size / 2), new Vector2(size, size)), color);
+        }
+
+        // Troupes (petits points à la couleur du clan).
+        foreach (var army in _session.World.Armies)
+        {
+            if (!army.Alive) continue;
+            var team = CoreConvert.ColorOf(army.ColorRgb);
+            foreach (var u in army.Units)
+                if (!u.Dead) DrawRect(new Rect2(ToMap(u.Position.ToGodot()) - Vector2.One, new Vector2(2, 2)), team);
+        }
+
         // Chefs.
         foreach (var army in _session.World.Armies)
         {

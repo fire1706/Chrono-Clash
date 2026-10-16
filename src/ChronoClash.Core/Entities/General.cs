@@ -6,13 +6,13 @@ namespace ChronoClash.Core.Entities;
 /// Le chef d'un clan. C'est lui que le joueur dirige ; l'armée se place autour de lui (étape M2).
 /// Ne contient que des données : il est déplacé par <see cref="Systems.GeneralMovementSystem"/>.
 /// </summary>
-public sealed class General
+public sealed class General : IBody
 {
     /// <summary>Rayon de collision du chef, en pixels.</summary>
     public const float Radius = 14;
 
     // ---- Position et mouvement ----
-    public Vec2 Position;
+    public Vec2 Position { get; set; }
     /// <summary>Position au tick précédent : l'affichage glisse entre les deux pour rester fluide.</summary>
     public Vec2 PreviousPosition;
     public Vec2 Velocity;
@@ -46,6 +46,11 @@ public sealed class General
     public float Hp = 240;
     public float MaxHp = 240;
     public bool Dead;
+
+    /// <summary>Le clan de ce chef (renseigné par le constructeur de <see cref="Army"/>).</summary>
+    public Army Owner { get; internal set; } = null!;
+    public float BodyRadius => Radius;
+    public bool IsDead => Dead;
 
     public General(Vec2 position)
     {

@@ -26,11 +26,13 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
 
 1. Ouvrir Godot .NET. Dans la **liste des projets**, cliquer sur **Importer** et choisir le fichier `game/project.godot` (et **pas** la racine du dépôt).
 2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
-3. Étape M1 : la carte s'affiche avec ton chef de clan. Tu peux te promener :
+3. Étape M2 : la carte s'affiche avec ton chef de clan et des bulles à ramasser pour lever une armée :
    - **ZQSD** (AZERTY) / **WASD** (QWERTY) ou flèches : marcher · **Espace** maintenu : sprint · **X** : halte
    - **Clic droit** : aller à un point (maintenu = suivre la souris) · **Maj + clic droit** : ajouter une étape
    - **Molette** : zoom · **Y** : verrouiller/libérer la caméra · **C** : recentrer · **clic molette glissé** : déplacer la vue
-   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **F2** : nouvelle carte avec le thème suivant
+   - **4 / 5 / 6** : acheter un guerrier / une troupe à distance / un tank · **Tab** ou **7 8 9 0** : changer de formation · **F** : éditeur de formation
+   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller
+   - Tests : **F4** +20 troupes · **F2** nouvelle carte avec le thème suivant · **F3** panneau technique
 
 ## Lancer les tests et le serveur (optionnel)
 

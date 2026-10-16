@@ -15,4 +15,6 @@ public sealed record MatchSettings
     public MapTheme Theme { get; init; } = MapTheme.Temperate;
     public BotDifficulty Difficulty { get; init; } = BotDifficulty.Normal;
     public bool FogOfWar { get; init; } = true;
+    /// <summary>Autorise les commandes de test (F4 : +20 troupes). À désactiver pour les vraies parties en ligne.</summary>
+    public bool AllowCheats { get; init; }
 }

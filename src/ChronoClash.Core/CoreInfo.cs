@@ -4,8 +4,8 @@ namespace ChronoClash.Core;
 public static class CoreInfo
 {
     public const string GameName = "Chrono Clash";
-    public const string Version = "0.1.0-M1";
+    public const string Version = "0.2.0-M2";
 
     /// <summary>Version du protocole réseau. Deux machines doivent avoir la même pour jouer ensemble.</summary>
-    public const int ProtocolVersion = 1;
+    public const int ProtocolVersion = 2;
 }

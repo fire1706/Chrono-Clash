@@ -1,0 +1,15 @@
+// Réglages d'équilibrage généraux. Valeurs issues des simulations du prototype HTML.
+{
+  "bubbles": {
+    "troopBubbleTarget": 720,      // nombre de bulles de troupes visé sur la carte
+    "starTarget": 60,              // nombre d'étoiles visé
+    "troopSpawnInterval": 0.6,     // secondes entre deux apparitions de bulle (si on est sous l'objectif)
+    "starSpawnInterval": 4,
+    "nearSpawnCount": 14,          // bulles placées autour de chaque point de départ en début de partie
+    "nearSpawnRadius": 520,
+    "pointsPerTroopBubble": 1      // ★ gagnés en ramassant une bulle de troupe
+  },
+  "debug": {
+    "spawnTroopsCount": 20         // troupes ajoutées par la touche F4 (seulement si les triches sont autorisées)
+  }
+}
