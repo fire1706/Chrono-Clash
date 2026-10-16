@@ -101,6 +101,15 @@ public sealed class Army
         return counts;
     }
 
+    // ---- Côté client réseau (copie du monde reçue de l'hôte) ----
+    /// <summary>Nombre réel de troupes du clan, même celles cachées par le brouillard (pour le classement).</summary>
+    public int ReportedUnitCount { get; set; } = -1;
+    /// <summary>Le chef est-il dans le dernier snapshot reçu ? (sinon il est caché par le brouillard)</summary>
+    public bool ChiefVisible { get; set; } = true;
+
+    /// <summary>Nombre de troupes à afficher dans le classement (le vrai nombre, aussi pour un client réseau).</summary>
+    public int DisplayUnitCount => ReportedUnitCount >= 0 ? ReportedUnitCount : Units.Count;
+
     /// <summary>Nombre de troupes vivantes.</summary>
     public int LivingUnits => Units.Count(u => !u.Dead);
 }

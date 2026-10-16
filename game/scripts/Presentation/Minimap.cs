@@ -129,7 +129,7 @@ public partial class Minimap : Control
         foreach (var army in _session.World.Armies)
         {
             if (!army.Alive || army.General.Dead) continue;
-            if (army != _session.LocalArmy && !_session.CanSee(army.General.Position)) continue;
+            if (army != _session.LocalArmy && (!army.ChiefVisible || !_session.CanSee(army.General.Position))) continue;
             var p = ToMap(_renderer.DisplayPosition(army.General));
             DrawCircle(p, 5, new Color(0.1f, 0.07f, 0.04f));
             DrawCircle(p, 4, CoreConvert.ColorOf(army.ColorRgb));

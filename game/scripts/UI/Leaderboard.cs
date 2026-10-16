@@ -46,7 +46,7 @@ public partial class Leaderboard : Control
             DrawString(font, new Vector2(12, y), place, HorizontalAlignment.Left, -1, 13, Colors.White);
             DrawCircle(new Vector2(42, y - 5), 5, color);
             DrawString(font, new Vector2(54, y), name, HorizontalAlignment.Left, 170, 13, mine ? new Color(1, 0.9f, 0.5f) : Colors.White);
-            string stats = a.Alive ? $"{world.Data.Eras[a.Era].Short} · {a.Units.Count} · {a.Points} ★" : "éliminé";
+            string stats = a.Alive ? $"{world.Data.Eras[a.Era].Short} · {a.DisplayUnitCount} · {a.Points} ★" : "éliminé";
             DrawString(font, new Vector2(228, y), stats, HorizontalAlignment.Right, 120, 12, new Color(1, 1, 1, 0.8f));
             y += 24;
             if (a.Alive) rank++;

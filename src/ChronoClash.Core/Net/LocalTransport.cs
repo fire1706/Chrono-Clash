@@ -25,11 +25,25 @@ public sealed class LocalTransport : ITransport
     public int LocalPeerId { get; }
     public bool IsHost => LocalPeerId == 1;
 
-    // Ces événements ne se produisent jamais en local (la connexion est immédiate et permanente).
-#pragma warning disable CS0067
     public event Action<int>? PeerConnected;
     public event Action<int>? PeerDisconnected;
-#pragma warning restore CS0067
+
+    /// <summary>Annonce une déconnexion aux deux bouts (tests du multijoueur).</summary>
+    public void SimulateDisconnect()
+    {
+        PeerDisconnected?.Invoke(_other!.LocalPeerId);
+        _other.PeerDisconnected?.Invoke(LocalPeerId);
+    }
+
+    /// <summary>
+    /// Annonce la connexion aux deux bouts (comme le ferait un vrai réseau). Sert aux tests du multijoueur :
+    /// une paire locale se comporte alors comme un hôte et un client reliés par internet.
+    /// </summary>
+    public void SimulateConnect()
+    {
+        PeerConnected?.Invoke(_other!.LocalPeerId);
+        _other.PeerConnected?.Invoke(LocalPeerId);
+    }
 
     public void Send(int peerId, ReadOnlySpan<byte> data, bool reliable)
     {

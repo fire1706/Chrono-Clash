@@ -7,46 +7,129 @@ using Godot;
 
 namespace ChronoClash.Game.Net;
 
+/// <summary>Comment cette machine participe à la partie.</summary>
+public enum SessionMode { None, Solo, Host, Client }
+
 /// <summary>
-/// Lien entre Godot et la simulation. En solo, il crée l'hôte ET le client dans le même programme,
-/// reliés par un LocalTransport : les ordres du joueur passent par le même chemin qu'en réseau.
-/// À l'étape M5, il saura aussi héberger (EnetTransport en écoute) ou rejoindre une partie.
-///
+/// Lien entre Godot et la simulation, dans les trois façons de jouer :
+/// - Solo : hôte et joueur dans le même programme (transport local), 9 bots ;
+/// - Héberger : la même chose, plus un transport ENet en écoute pour les amis ;
+/// - Rejoindre : un client ENet qui reçoit une copie du monde de l'hôte.
+/// L'affichage lit toujours <see cref="World"/> et envoie ses ordres par <see cref="Send"/>, quel que soit le mode.
 /// Ce nœud doit être ajouté AVANT les nœuds d'affichage pour que la simulation avance d'abord à chaque image.
 /// </summary>
 public partial class GameSession : Node
 {
-    /// <summary>En solo, le joueur local est le joueur numéro 1.</summary>
-    public const int SoloPlayerId = 1;
+    /// <summary>Le joueur de l'hôte (et du solo) est le joueur numéro 1.</summary>
+    public const int SoloPlayerId = HostSession.HostPlayerId;
+    /// <summary>Temps maximal pour se connecter à un hôte.</summary>
+    private const double ConnectTimeout = 8;
 
-    private HostSession _host = null!;
-    private ClientSession _client = null!;
+    private HostSession? _host;
+    private ClientSession? _localClient;
+    private RemoteClient? _remote;
+    private EnetTransport? _network;
+    private double _connectTimer;
 
-    public Match Match { get; private set; } = null!;
-    public World World => Match.World;
-    public int LocalPlayerId => _client.LocalPlayerId;
+    public SessionMode Mode { get; private set; }
+
+    /// <summary>Le salon a changé, la partie commence, une erreur réseau (message à afficher).</summary>
+    public event Action? LobbyChanged;
+    public event Action? MatchStarted;
+    public event Action<string>? NetworkError;
+    /// <summary>Événements de la simulation (son, interface, annonceur s'y abonnent).</summary>
+    public event Action<GameEvent>? EventRaised;
+
+    public Match? Match => _host?.Match;
+    public bool InMatch => Mode == SessionMode.Client ? _remote?.World != null : _host?.Match != null;
+    public World World => Mode == SessionMode.Client ? _remote!.World! : _host!.Match!.World;
+    public int LocalPlayerId => Mode == SessionMode.Client ? _remote!.PlayerId : SoloPlayerId;
 
     /// <summary>Le clan du joueur de cette machine.</summary>
     public Army LocalArmy => World.FindArmyOfPlayer(LocalPlayerId)!;
 
-    /// <summary>Fraction (0 à 1) du tick en cours : l'affichage s'en sert pour glisser entre deux ticks.</summary>
-    public float Alpha => (float)Match.Clock.Alpha;
+    /// <summary>
+    /// Fraction (0 à 1) entre deux états du monde : l'affichage s'en sert pour glisser entre deux ticks (hôte)
+    /// ou entre deux snapshots (client).
+    /// </summary>
+    public float Alpha => Mode == SessionMode.Client
+        ? Mathf.Clamp(_remote!.SinceSnapshot / HostSession.SnapshotInterval, 0, 1)
+        : (float)_host!.Match!.Clock.Alpha;
 
-    /// <summary>Événements de la simulation (son, interface, annonceur s'y abonnent).</summary>
-    public event Action<GameEvent>? EventRaised;
+    /// <summary>Joueurs humains du salon d'attente.</summary>
+    public IReadOnlyList<LobbyPlayer> LobbyPlayers => Mode == SessionMode.Client ? _remote!.Lobby : _host?.Players ?? new List<LobbyPlayer>();
+    public MatchSettings LobbySettings => Mode == SessionMode.Client ? _remote!.LobbySettings : _host?.LobbySettings ?? new MatchSettings();
+    /// <summary>Client accepté par l'hôte (il a reçu son numéro de joueur).</summary>
+    public bool Accepted => Mode != SessionMode.Client || _remote!.PlayerId > 0;
 
-    /// <summary>Démarre une partie hors ligne : ton clan contre 9 bots.</summary>
+    // ================= Démarrer =================
+
+    /// <summary>Partie hors ligne : ton clan contre 9 bots.</summary>
     public void StartSolo(MatchSettings settings, string playerName, uint colorRgb)
     {
-        Match = new Match(settings);
-        Match.AddArmy(SoloPlayerId, playerName, colorRgb, isBot: false);
-        Match.AddBots();
-
-        var (hostEnd, clientEnd) = LocalTransport.CreatePair();
-        _host = new HostSession(Match, hostEnd);
-        _host.BindPeer(clientEnd.LocalPeerId, SoloPlayerId);
-        _client = new ClientSession(clientEnd, SoloPlayerId);
+        CreateLocalHost(null, playerName, colorRgb);
+        Mode = SessionMode.Solo;
+        _host!.StartMatch(settings);
+        MatchStarted?.Invoke();
     }
+
+    /// <summary>Héberger : ouvre le salon d'attente. Renvoie un message d'erreur, ou null si tout va bien.</summary>
+    public string? StartHost(int port, string playerName, uint colorRgb)
+    {
+        _network = EnetTransport.Host(port, out string error);
+        if (_network == null) return error;
+        CreateLocalHost(_network, playerName, colorRgb);
+        _host!.LobbyChanged += () => LobbyChanged?.Invoke();
+        Mode = SessionMode.Host;
+        LobbyChanged?.Invoke();
+        return null;
+    }
+
+    /// <summary>Rejoindre l'hôte à cette adresse. Renvoie un message d'erreur, ou null si la connexion est lancée.</summary>
+    public string? Join(string address, int port, string playerName, uint colorRgb)
+    {
+        _network = EnetTransport.Join(address, port, out string error);
+        if (_network == null) return error;
+        _remote = new RemoteClient(_network, playerName, colorRgb);
+        _remote.LobbyChanged += () => LobbyChanged?.Invoke();
+        _remote.MatchStarted += () => MatchStarted?.Invoke();
+        _remote.Rejected += reason => { NetworkError?.Invoke($"Connexion refusée : {reason}"); Leave(); };
+        _remote.Disconnected += () => NetworkError?.Invoke("La connexion avec l'hôte a été perdue.");
+        _remote.EventReceived += e => EventRaised?.Invoke(e);
+        _connectTimer = ConnectTimeout;
+        Mode = SessionMode.Client;
+        return null;
+    }
+
+    private void CreateLocalHost(ITransport? network, string playerName, uint colorRgb)
+    {
+        var (hostEnd, clientEnd) = LocalTransport.CreatePair();
+        _host = new HostSession(hostEnd, network, playerName, colorRgb);
+        _host.BindLocalPeer(clientEnd.LocalPeerId, SoloPlayerId);
+        _localClient = new ClientSession(clientEnd, SoloPlayerId);
+    }
+
+    /// <summary>L'hôte change les réglages du salon (envoyés aux joueurs connectés).</summary>
+    public void HostSetSettings(MatchSettings settings) => _host?.SetLobbySettings(settings);
+
+    /// <summary>L'hôte lance la partie avec les joueurs du salon (+ des bots pour compléter).</summary>
+    public void HostStart(MatchSettings settings)
+    {
+        if (_host == null || _host.Match != null) return;
+        _host.StartMatch(settings);
+        MatchStarted?.Invoke();
+    }
+
+    /// <summary>Quitte la partie ou le salon (ferme la connexion).</summary>
+    public void Leave()
+    {
+        _network?.Close();
+        _network = null;
+    }
+
+    public override void _ExitTree() => Leave();
+
+    // ================= Pendant la partie =================
 
     /// <summary>
     /// Envoie à l'hôte les 4 formations dessinées par le joueur et celle qu'il utilise.
@@ -67,11 +150,27 @@ public partial class GameSession : Node
         => !World.Settings.FogOfWar || !LocalArmy.Alive || World.IsVisibleTo(LocalArmy, p);
 
     /// <summary>Envoie un ordre du joueur local à l'hôte.</summary>
-    public void Send(PlayerCommand command) => _client.Send(command);
+    public void Send(PlayerCommand command)
+    {
+        if (Mode == SessionMode.Client) _remote?.Send(command);
+        else _localClient?.Send(command);
+    }
 
     public override void _Process(double delta)
     {
+        if (Mode == SessionMode.Client)
+        {
+            _remote!.Update(delta);
+            // Pas de réponse de l'hôte au bout de quelques secondes : on abandonne.
+            if (_remote.PlayerId == 0 && _network != null)
+            {
+                _connectTimer -= delta;
+                if (_connectTimer <= 0 || !_network.IsOpen) { NetworkError?.Invoke("Impossible de joindre l'hôte (adresse, port ou pare-feu ?)."); Leave(); _remote.Reset(); }
+            }
+            return;
+        }
+        if (_host == null) return;
         _host.Update(delta);
-        foreach (var e in Match.Events) EventRaised?.Invoke(e);
+        if (_host.Match != null) foreach (var e in _host.Match.Events) EventRaised?.Invoke(e);
     }
 }

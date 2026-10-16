@@ -9,42 +9,64 @@ using Godot;
 namespace ChronoClash.Game.Bootstrap;
 
 /// <summary>
-/// Point d'entrée du jeu : assemble la partie et tous les éléments d'affichage.
+/// Point d'entrée du jeu. Au lancement : l'écran d'accueil / salon (<see cref="LobbyScreen"/>).
+/// Quand la partie commence (solo, hébergée ou rejointe), on assemble l'affichage du monde.
 /// L'ordre d'ajout compte : la session (simulation) d'abord, puis la carte, les bulles, les troupes, les chefs,
 /// les effets, la caméra, les contrôles et enfin l'interface par-dessus.
-/// (À l'étape M6, l'écran titre choisira les réglages avant de lancer cette scène.)
 ///
-/// Raccourcis : L = classement · F2 = nouvelle carte avec le thème suivant · F3 = panneau technique ·
-/// F8 = mode (classique / rapide / bac à sable) · F9 = difficulté des bots · F10 = brouillard de guerre.
+/// Raccourcis : L = classement · F2 = nouvelle partie (solo : nouvelle carte, thème suivant ; en réseau : retour au salon) ·
+/// F3 = panneau technique · en solo seulement : F8 mode, F9 difficulté, F10 brouillard.
 /// </summary>
 public partial class GameRoot : Node2D
 {
-    // Réglages de la prochaine partie (statiques pour survivre au rechargement de la scène).
-    // À l'étape M6, l'écran titre les remplacera.
-    /// <summary>Thème de la carte (F2 passe au suivant avec une nouvelle carte).</summary>
-    private static int _themeIndex;
-    /// <summary>Mode : classique, rapide, bac à sable (F8).</summary>
-    private static GameMode _mode = GameMode.Classic;
-    /// <summary>Difficulté des bots (F9).</summary>
-    private static BotDifficulty _difficulty = BotDifficulty.Normal;
-    /// <summary>Brouillard de guerre (F10).</summary>
-    private static bool _fog = true;
+    /// <summary>Relancer directement une partie solo après un rechargement (F2, F8, F9, F10).</summary>
+    private static bool _autoSolo;
 
-    private DebugHud _debug = null!;
-    private Leaderboard _board = null!;
+    private GameSession _session = null!;
+    private PlayerProfile _profile = null!;
+    private CanvasLayer? _lobbyLayer;
+    private DebugHud? _debug;
+    private Leaderboard? _board;
 
     public override void _Ready()
     {
-        // AllowCheats : autorise F4 (+20 troupes) pendant le développement.
-        var settings = new MatchSettings
-        {
-            Seed = GD.Randi(), Theme = (MapTheme)_themeIndex, Mode = _mode, Difficulty = _difficulty, FogOfWar = _fog, AllowCheats = true,
-        };
-        var store = FormationStore.Load();
+        _profile = PlayerProfile.Load();
+        _session = new GameSession { Name = "Session" };
+        AddChild(_session);
+        _session.MatchStarted += BuildGame;
 
-        var session = new GameSession { Name = "Session" };
-        AddChild(session);
-        session.StartSolo(settings, "Toi", 0xF0B52A);
+        if (_autoSolo)
+        {
+            _autoSolo = false;
+            _session.StartSolo(SoloSettings(), _profile.Name, _profile.ColorRgb);
+            return;
+        }
+        _lobbyLayer = new CanvasLayer { Name = "Lobby" };
+        AddChild(_lobbyLayer);
+        var lobby = new LobbyScreen { Name = "LobbyScreen" };
+        _lobbyLayer.AddChild(lobby);
+        lobby.Setup(_session, _profile);
+    }
+
+    private MatchSettings SoloSettings() => new()
+    {
+        Seed = GD.Randi(), Mode = (GameMode)_profile.Mode, Difficulty = (BotDifficulty)_profile.Difficulty,
+        Theme = (MapTheme)_profile.Theme, FogOfWar = _profile.Fog, AllowCheats = true,
+    };
+
+    /// <summary>Assemble l'affichage de la partie (appelé quand la partie commence).</summary>
+    private void BuildGame()
+    {
+        // On attend la fin de l'image : le salon (qui a déclenché le démarrage) est encore en train de s'exécuter.
+        Callable.From(BuildGameNow).CallDeferred();
+    }
+
+    private void BuildGameNow()
+    {
+        _lobbyLayer?.QueueFree();
+        _lobbyLayer = null;
+        var session = _session;
+        var store = FormationStore.Load();
         session.SendFormations(store);
 
         // ---- Monde (du plus bas au plus haut à l'écran) ----
@@ -62,17 +84,17 @@ public partial class GameRoot : Node2D
         var camera = new CameraController { Name = "Camera" };
         var input = new InputMapper { Name = "Input" };
         foreach (var node in new Node[] { map, bubbles, ground, corpses, troops, chiefs, top, projectiles, effects, zone, fog, camera, input }) AddChild(node);
-        ground.Setup(session, camera);
-        top.Setup(session, camera);
-        zone.Setup(session, camera);
-        fog.Setup(session);
         map.Setup(session, camera);
         bubbles.Setup(session, camera);
+        ground.Setup(session, camera);
         corpses.Setup(session);
-        projectiles.Setup(session, camera);
         troops.Setup(session, camera);
         chiefs.Setup(session, camera);
+        top.Setup(session, camera);
+        projectiles.Setup(session, camera);
         effects.Setup(session, camera);
+        zone.Setup(session, camera);
+        fog.Setup(session);
         camera.Setup(session, chiefs);
 
         // ---- Interface ----
@@ -88,13 +110,13 @@ public partial class GameRoot : Node2D
         foreach (var node in new Node[] { weather, indicators, _debug, hud, _board, minimap, editor }) ui.AddChild(node);
         weather.Setup(session);
         indicators.Setup(session, camera);
-        _board.Setup(session);
         _debug.Setup(session, camera);
         hud.Setup(session, store, editor.Open);
+        _board.Setup(session);
         minimap.Setup(session, camera, chiefs);
         editor.Setup(session, store, hud);
         camera.Notify += hud.ShowChip;
-
+        session.NetworkError += message => hud.Announce($"{message}\nF2 : retour à l'accueil", stays: true);
         input.Setup(session, camera, chiefs, editor, store, hud);
 
         // On génère tout de suite le terrain autour du chef pour ne pas voir de cases vides au départ.
@@ -103,16 +125,28 @@ public partial class GameRoot : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.Keycode == Key.F2)
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key || !_session.InMatch) return;
+        bool solo = _session.Mode == SessionMode.Solo;
+        switch (key.Keycode)
         {
-            _themeIndex = (_themeIndex + 1) % 4;
-            GetTree().ReloadCurrentScene();
+            case Key.F2:
+                if (solo) { _profile.Theme = (_profile.Theme + 1) % 4; _profile.Save(); _autoSolo = true; }
+                _session.Leave();
+                GetTree().ReloadCurrentScene();
+                break;
+            case Key.F3 when _debug != null: _debug.Visible = !_debug.Visible; break;
+            case Key.L when _board != null: _board.Visible = !_board.Visible; break;
+            case Key.F8 when solo: _profile.Mode = (_profile.Mode + 1) % 3; Restart(); break;
+            case Key.F9 when solo: _profile.Difficulty = (_profile.Difficulty + 1) % 3; Restart(); break;
+            case Key.F10 when solo: _profile.Fog = !_profile.Fog; Restart(); break;
         }
-        else if (key.Keycode == Key.F3) _debug.Visible = !_debug.Visible;
-        else if (key.Keycode == Key.L) _board.Visible = !_board.Visible;
-        else if (key.Keycode == Key.F8) { _mode = _mode == GameMode.Classic ? GameMode.Quick : _mode == GameMode.Quick ? GameMode.Sandbox : GameMode.Classic; GetTree().ReloadCurrentScene(); }
-        else if (key.Keycode == Key.F9) { _difficulty = (BotDifficulty)(((int)_difficulty + 1) % 3); GetTree().ReloadCurrentScene(); }
-        else if (key.Keycode == Key.F10) { _fog = !_fog; GetTree().ReloadCurrentScene(); }
+    }
+
+    /// <summary>Relance une partie solo avec les réglages modifiés.</summary>
+    private void Restart()
+    {
+        _profile.Save();
+        _autoSolo = true;
+        GetTree().ReloadCurrentScene();
     }
 }

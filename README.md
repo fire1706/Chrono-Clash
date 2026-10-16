@@ -26,7 +26,7 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
 
 1. Ouvrir Godot .NET. Dans la **liste des projets**, cliquer sur **Importer** et choisir le fichier `game/project.godot` (et **pas** la racine du dépôt).
 2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
-3. Étape M4 : une vraie partie solo contre 9 bots, avec la zone battle royale et la carte vivante :
+3. L'écran d'accueil s'ouvre : choisis ton nom, ta couleur, les réglages, puis **Jouer seul**, **Héberger** ou **Rejoindre** (voir « Jouer à plusieurs » plus bas). En jeu :
    - **ZQSD** (AZERTY) / **WASD** (QWERTY) ou flèches : marcher · **Espace** maintenu : sprint · **X** : halte
    - **Clic droit** : aller à un point (maintenu = suivre la souris) · **Maj + clic droit** : ajouter une étape
    - **Molette** : zoom · **Y** : verrouiller/libérer la caméra · **C** : recentrer · **clic molette glissé** : déplacer la vue
@@ -35,6 +35,17 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
    - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **L** : classement
    - **F8** : mode (classique / rapide / bac à sable) · **F9** : difficulté des bots · **F10** : brouillard de guerre
    - Tests : **F4** +20 troupes · **F6** clan ennemi immobile (**Maj + F6** : 2 ères d'avance) · **F7** +50 ★ · **F2** nouvelle carte · **F3** panneau technique
+
+## Jouer à plusieurs
+
+1. **L'hôte** clique sur **Héberger une partie**. L'écran affiche son adresse IP locale (par exemple `192.168.1.20`).
+2. **Les amis** tapent cette adresse dans le champ à côté de **Rejoindre**, avec le même port (7777 par défaut), puis cliquent sur **Rejoindre**.
+3. Quand tout le monde est dans le salon, l'hôte clique sur **Lancer la partie**. Les places libres (jusqu'à 10 clans) sont prises par des bots.
+
+- **Sur le même réseau (même box)** : rien d'autre à faire.
+- **Par internet** : l'hôte doit ouvrir le **port UDP 7777** sur sa box (« redirection de port » vers son ordinateur) et donner aux amis son **adresse IP publique** (visible sur un site comme « quel est mon IP »). Le pare-feu de Windows peut aussi demander l'autorisation la première fois : accepter pour les réseaux privés.
+- Pour tester seul sur un ordinateur : lancer le jeu deux fois (depuis Godot : *Debug → Run Multiple Instances → 2*), héberger dans l'un et rejoindre `127.0.0.1` dans l'autre.
+- Tout le monde doit avoir **exactement la même version** du jeu (le salon refuse sinon).
 
 ## Lancer les tests et le serveur (optionnel)
 
