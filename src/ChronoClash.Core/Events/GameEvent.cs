@@ -49,3 +49,31 @@ public sealed record ProjectileImpactEvent(long Tick, string Kind, float X, floa
 
 /// <summary>Une attaque au corps à corps (pour les étincelles et le son).</summary>
 public sealed record MeleeHitEvent(long Tick, float X, float Y) : GameEvent(Tick);
+
+/// <summary>La zone commence à se resserrer.</summary>
+public sealed record ZoneShrinkingEvent(long Tick, int Phase) : GameEvent(Tick);
+
+/// <summary>Un largage est annoncé (il tombera dans quelques secondes).</summary>
+public sealed record CrateAnnouncedEvent(long Tick, float X, float Y, float Seconds) : GameEvent(Tick);
+
+/// <summary>Un clan a récupéré le largage.</summary>
+public sealed record CrateCollectedEvent(long Tick, int ArmyId, float X, float Y) : GameEvent(Tick);
+
+/// <summary>Un boss est apparu, ou a été abattu (KillerArmyId = -1 s'il n'y a pas de tueur).</summary>
+public sealed record BossSpawnedEvent(long Tick, string Name, float X, float Y) : GameEvent(Tick);
+public sealed record BossKilledEvent(long Tick, string Name, int KillerArmyId, int Points, int Resources) : GameEvent(Tick);
+
+/// <summary>Un clan a traversé un portail temporel (Count troupes ont évolué).</summary>
+public sealed record PortalUsedEvent(long Tick, int ArmyId, float X, float Y, int Count) : GameEvent(Tick);
+
+/// <summary>Un clan a capturé un sanctuaire.</summary>
+public sealed record ShrineCapturedEvent(long Tick, int ArmyId, Entities.ShrineKind Kind, float X, float Y) : GameEvent(Tick);
+
+/// <summary>Événement aléatoire : pluie de météores, orage (début et fin), migration de bulles.</summary>
+public sealed record WorldEventStartedEvent(long Tick, string Kind) : GameEvent(Tick);
+
+/// <summary>Un météore s'est écrasé.</summary>
+public sealed record MeteorImpactEvent(long Tick, float X, float Y) : GameEvent(Tick);
+
+/// <summary>La partie est finie : un seul clan reste debout.</summary>
+public sealed record MatchEndedEvent(long Tick, int WinnerArmyId) : GameEvent(Tick);

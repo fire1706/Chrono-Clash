@@ -82,6 +82,25 @@ public partial class Minimap : Control
             foreach (var p in g.Path) { var to = ToMap(p.ToGodot()); DrawDashedLine(from, to, new Color(1, 1, 1, 0.85f), 1, 4); from = to; }
         }
 
+        // Zone actuelle (trait violet) et prochaine zone (pointillés blancs).
+        var world = _session.World;
+        var z = world.Zone;
+        if (z.Radius < Terrain.WorldSize)
+            DrawArc(ToMap(z.Center.ToGodot()), z.Radius * Scale, 0, Mathf.Tau, 64, new Color(0.82f, 0.55f, 1f), 2);
+        if (z.NextCenter is { } nc)
+            for (int i = 0; i < 32; i += 2)
+                DrawArc(ToMap(nc.ToGodot()), z.NextRadius * Scale, i * Mathf.Tau / 32, (i + 1) * Mathf.Tau / 32, 4, Colors.White, 1.2f);
+        // Objectifs : sanctuaires (losanges à la couleur du propriétaire), portails, largage, boss.
+        foreach (var s in world.Shrines)
+        {
+            var c = ToMap(s.Position.ToGodot());
+            var col = s.Owner != null ? CoreConvert.ColorOf(s.Owner.ColorRgb) : new Color(0.85f, 0.8f, 0.7f);
+            DrawColoredPolygon(new[] { c + new Vector2(0, -4), c + new Vector2(4, 0), c + new Vector2(0, 4), c + new Vector2(-4, 0) }, col);
+        }
+        foreach (var portal in world.Portals) DrawCircle(ToMap(portal.Position.ToGodot()), 3.2f, new Color(0.71f, 0.42f, 1f, 0.85f));
+        if (world.Crate is { } crate) DrawRect(new Rect2(ToMap(crate.Position.ToGodot()) - new Vector2(3, 3), new Vector2(6, 6)), new Color(0.95f, 0.79f, 0.3f));
+        if (world.Boss is { Dead: false } boss) DrawCircle(ToMap(boss.Position.ToGodot()), 4.5f + Mathf.Sin((float)Time.GetTicksMsec() / 200f), new Color(1, 0.35f, 0.27f));
+
         // Zone visible par la caméra.
         var viewSize = GetViewportRect().Size / _camera.Zoom;
         var center = _camera.GetScreenCenterPosition();
@@ -101,14 +120,16 @@ public partial class Minimap : Control
         {
             if (!army.Alive) continue;
             var team = CoreConvert.ColorOf(army.ColorRgb);
+            bool mine = army == _session.LocalArmy;
             foreach (var u in army.Units)
-                if (!u.Dead) DrawRect(new Rect2(ToMap(u.Position.ToGodot()) - Vector2.One, new Vector2(2, 2)), team);
+                if (!u.Dead && (mine || _session.CanSee(u.Position))) DrawRect(new Rect2(ToMap(u.Position.ToGodot()) - Vector2.One, new Vector2(2, 2)), team);
         }
 
         // Chefs.
         foreach (var army in _session.World.Armies)
         {
             if (!army.Alive || army.General.Dead) continue;
+            if (army != _session.LocalArmy && !_session.CanSee(army.General.Position)) continue;
             var p = ToMap(_renderer.DisplayPosition(army.General));
             DrawCircle(p, 5, new Color(0.1f, 0.07f, 0.04f));
             DrawCircle(p, 4, CoreConvert.ColorOf(army.ColorRgb));

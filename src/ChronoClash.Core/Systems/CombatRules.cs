@@ -22,7 +22,7 @@ public static class CombatRules
     public static void ApplyDamage(World world, Army? attacker, Body target, float amount, int sourceEra)
     {
         if (target.Dead) return;
-        if (attacker != null) amount *= world.Data.Tuning.Combat.DamageMultiplier;
+        if (attacker != null) amount *= world.Data.Tuning.Combat.DamageMultiplier * attacker.Bonus.Damage; // sanctuaire de puissance
         target.Hp -= amount;
         target.LastDamageTime = world.TimeSeconds;
         target.HitFlash = 0.12f;

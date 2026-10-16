@@ -26,13 +26,14 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
 
 1. Ouvrir Godot .NET. Dans la **liste des projets**, cliquer sur **Importer** et choisir le fichier `game/project.godot` (et **pas** la racine du dépôt).
 2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
-3. Étape M3 : lève une armée, combats, évolue à travers les ères :
+3. Étape M4 : une vraie partie solo contre 9 bots, avec la zone battle royale et la carte vivante :
    - **ZQSD** (AZERTY) / **WASD** (QWERTY) ou flèches : marcher · **Espace** maintenu : sprint · **X** : halte
    - **Clic droit** : aller à un point (maintenu = suivre la souris) · **Maj + clic droit** : ajouter une étape
    - **Molette** : zoom · **Y** : verrouiller/libérer la caméra · **C** : recentrer · **clic molette glissé** : déplacer la vue
    - **1** charge · **2** retrait · **3** viser (le curseur) · **R** cri de guerre
    - **4 / 5 / 6** : acheter un guerrier / une troupe à distance / un tank · **Tab** ou **7 8 9 0** : changer de formation · **F** : éditeur de formation
-   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller
+   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **L** : classement
+   - **F8** : mode (classique / rapide / bac à sable) · **F9** : difficulté des bots · **F10** : brouillard de guerre
    - Tests : **F4** +20 troupes · **F6** clan ennemi immobile (**Maj + F6** : 2 ères d'avance) · **F7** +50 ★ · **F2** nouvelle carte · **F3** panneau technique
 
 ## Lancer les tests et le serveur (optionnel)

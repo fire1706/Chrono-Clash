@@ -32,7 +32,7 @@ public partial class ProjectileRenderer : Node2D
             var from = p.From.ToGodot();
             var to = p.To.ToGodot();
             var ground = from.Lerp(to, t);
-            if (!view.HasPoint(ground)) continue;
+            if (!view.HasPoint(ground) || !_session.CanSee(p.To)) continue;
             float height = p.ArcHeight * 4 * t * (1 - t); // parabole : 0 au départ et à l'arrivée
             var pos = ground + new Vector2(0, -height);
             float angle = (to - from).Angle();

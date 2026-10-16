@@ -56,6 +56,12 @@ public static class TacticSystem
                     events.Add(new TacticFailedEvent(world.Tick, army.PlayerId, kind, "il faut des guerriers ou des tanks pour charger"));
                     return false;
                 }
+                // Les bots chargent vers les ennemis (point donné dans l'ordre) ; un joueur charge droit devant son chef.
+                if (army.IsBot && aimPoint.LengthSquared > 0 && Vec2.Distance(aimPoint, g.Position) > 1)
+                {
+                    forward = (aimPoint - g.Position).Normalized();
+                    army.FormationAngle = g.Angle = forward.Angle;
+                }
                 army.ChargeDirection = forward;
                 foreach (var u in chargers) { u.ChargeTime = tuning.Charge.Duration; u.ChargeHits.Clear(); u.Target = null; u.Path = null; }
                 count = chargers.Count;

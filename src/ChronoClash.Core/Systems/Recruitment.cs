@@ -58,6 +58,7 @@ public static class Recruitment
         int number = world.Armies.Count(a => a.Name.StartsWith("Clan d'entraînement")) + 1;
         var enemy = world.CreateArmy(-1000 - world.Armies.Count, $"Clan d'entraînement {number}", 0x9A9A9A, isBot: true, position);
         enemy.Era = era;
+        enemy.IsPassive = true;
         enemy.General.ApplyEraStats(world.Data, era);
         enemy.General.Hp = enemy.General.MaxHp;
         enemy.General.Angle = enemy.FormationAngle = (g.Position - position).Angle; // il fait face au joueur

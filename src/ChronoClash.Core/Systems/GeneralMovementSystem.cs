@@ -63,7 +63,7 @@ public static class GeneralMovementSystem
 
         // 3. Vitesse : on se rapproche en douceur de la vitesse voulue (accélération / freinage).
         // La vitesse dépend aussi du chef de l'ère (un chevalier à cheval va plus vite qu'un centurion).
-        float maxSpeed = T.BaseSpeed * g.SpeedMultiplier * (g.Sprinting ? T.SprintMultiplier : 1f) * (retreating ? 0.85f : 1f)
+        float maxSpeed = T.BaseSpeed * g.SpeedMultiplier * army.Bonus.Speed * world.WeatherSpeed * (g.Sprinting ? T.SprintMultiplier : 1f) * (retreating ? 0.85f : 1f)
                          * terrain.SpeedFactor(g.Position.X, g.Position.Y) * arrive;
         float k = MathF.Min(1, (moving ? T.AccelerationMoving : T.AccelerationStopping) * dt);
         g.Velocity += (direction * maxSpeed - g.Velocity) * k;

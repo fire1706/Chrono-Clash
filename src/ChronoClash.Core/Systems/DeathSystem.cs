@@ -23,6 +23,7 @@ public static class DeathSystem
 
         foreach (var (victim, killer, sourceEra) in deaths)
         {
+            if (victim is Boss boss) { ObjectiveSystem.OnBossKilled(world, boss, killer, events); continue; }
             var army = victim.Owner;
             var chief = victim as General;
             var unit = victim as Unit;
@@ -83,6 +84,7 @@ public static class DeathSystem
         if (!army.Alive || !army.General.Dead || army.Units.Any(u => !u.Dead)) return;
         army.Alive = false;
         army.EliminatedAt = world.TimeSeconds;
+        army.Placement = world.Armies.Count(a => a.Alive) + 1; // ex. dernier des 10 = 10e
         var killer = army.LastHitBy;
         if (killer != null && killer.Alive && killer != army)
         {
@@ -90,5 +92,17 @@ public static class DeathSystem
             killer.Resources += world.Data.Tuning.Combat.EliminationResources;
         }
         events.Add(new ArmyEliminatedEvent(world.Tick, army.Id, killer?.Id ?? -1, world.Armies.Count(a => a.Alive)));
+    }
+
+    /// <summary>Fin de partie : quand il ne reste qu'un clan (sur au moins deux au départ), il gagne.</summary>
+    public static void CheckMatchEnd(World world, List<GameEvent> events)
+    {
+        if (world.IsOver || world.Armies.Count < 2) return;
+        var alive = world.Armies.Where(a => a.Alive && !a.IsPassive).ToList();
+        if (alive.Count > 1) return;
+        world.IsOver = true;
+        world.Winner = alive.FirstOrDefault();
+        if (world.Winner != null) world.Winner.Placement = 1;
+        events.Add(new MatchEndedEvent(world.Tick, world.Winner?.Id ?? -1));
     }
 }

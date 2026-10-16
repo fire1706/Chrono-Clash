@@ -53,5 +53,6 @@ public sealed class SpatialGrid
             if (!army.General.Dead) Insert(army.General);
             foreach (var u in army.Units) if (!u.Dead) Insert(u);
         }
+        if (world.Boss is { Dead: false } boss) Insert(boss);
     }
 }

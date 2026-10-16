@@ -35,11 +35,12 @@ public partial class GameSession : Node
     /// <summary>Événements de la simulation (son, interface, annonceur s'y abonnent).</summary>
     public event Action<GameEvent>? EventRaised;
 
-    /// <summary>Démarre une partie hors ligne. (Pour l'instant un seul clan, le tien. Les bots arrivent à l'étape M4.)</summary>
+    /// <summary>Démarre une partie hors ligne : ton clan contre 9 bots.</summary>
     public void StartSolo(MatchSettings settings, string playerName, uint colorRgb)
     {
         Match = new Match(settings);
         Match.AddArmy(SoloPlayerId, playerName, colorRgb, isBot: false);
+        Match.AddBots();
 
         var (hostEnd, clientEnd) = LocalTransport.CreatePair();
         _host = new HostSession(Match, hostEnd);
@@ -57,6 +58,13 @@ public partial class GameSession : Node
             Send(new SetFormationCellsCommand(World.Tick, LocalPlayerId, i, (byte[])store.Cells[i].Clone()));
         Send(new SelectFormationCommand(World.Tick, LocalPlayerId, store.Current));
     }
+
+    /// <summary>
+    /// Le joueur local peut-il voir ce point ? Faux dans le brouillard de guerre.
+    /// Une fois son clan éliminé, il voit toute la carte (mode spectateur).
+    /// </summary>
+    public bool CanSee(Core.Mathematics.Vec2 p)
+        => !World.Settings.FogOfWar || !LocalArmy.Alive || World.IsVisibleTo(LocalArmy, p);
 
     /// <summary>Envoie un ordre du joueur local à l'hôte.</summary>
     public void Send(PlayerCommand command) => _client.Send(command);

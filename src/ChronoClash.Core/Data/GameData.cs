@@ -22,6 +22,8 @@ public sealed class GameData
     public StarDef Star { get; set; } = new();
     public List<EraDef> Eras { get; set; } = new();
     public TuningDef Tuning { get; set; } = new();
+    /// <summary>Clans rivaux et personnalités des bots (data/bots.json).</summary>
+    public BotsDef Bots { get; set; } = new();
 
     /// <summary>Définition d'un type de troupe (guerrier, distance, tank).</summary>
     public TroopDef Troop(TroopKind kind) => _troopsByKind[(int)kind];
@@ -43,7 +45,8 @@ public sealed class GameData
         var troops = Read<TroopsFile>("troops.json");
         var eras = Read<ErasFile>("eras.json");
         var tuning = Read<TuningDef>("tuning.json");
-        var data = new GameData { Troops = troops.Troops, Chiefs = troops.Chiefs, Star = troops.Star, Eras = eras.Eras, Tuning = tuning };
+        var bots = Read<BotsDef>("bots.json");
+        var data = new GameData { Troops = troops.Troops, Chiefs = troops.Chiefs, Star = troops.Star, Eras = eras.Eras, Tuning = tuning, Bots = bots };
         data.Index();
         return data;
     }
@@ -152,7 +155,173 @@ public sealed class TuningDef
     public TacticsTuning Tactics { get; set; } = new();
     public EvolutionTuning Evolution { get; set; } = new();
     public VeteranTuning Veterans { get; set; } = new();
+    public ZoneTuning Zone { get; set; } = new();
+    public ObjectivesTuning Objectives { get; set; } = new();
+    public EventsTuning Events { get; set; } = new();
+    public AiTuning Ai { get; set; } = new();
+    public Dictionary<string, DifficultyDef> Difficulty { get; set; } = new();
+    public QuickModeTuning QuickMode { get; set; } = new();
+    public VisionTuning Vision { get; set; } = new();
     public DebugTuning Debug { get; set; } = new();
+
+    /// <summary>Réglages de difficulté des bots (Normal si le niveau est inconnu).</summary>
+    public DifficultyDef DifficultyOf(Simulation.BotDifficulty level)
+        => Difficulty.TryGetValue(level.ToString(), out var d) ? d : Difficulty.TryGetValue("Normal", out var n) ? n : new DifficultyDef();
+}
+
+public sealed class ZoneTuning
+{
+    public float DamageTick { get; set; } = 0.5f;
+    public List<ZonePhase> Phases { get; set; } = new();
+}
+
+/// <summary>Une phase de la zone : attente, rétrécissement, nouveau rayon, dégâts par seconde (part de la vie max).</summary>
+public sealed class ZonePhase
+{
+    public float Wait { get; set; }
+    public float Shrink { get; set; }
+    public float Radius { get; set; }
+    public float Damage { get; set; }
+}
+
+public sealed class ObjectivesTuning
+{
+    public CrateTuning Crate { get; set; } = new();
+    public BossTuning Boss { get; set; } = new();
+    public PortalTuning Portals { get; set; } = new();
+    public ShrineTuning Shrines { get; set; } = new();
+}
+
+public sealed class CrateTuning
+{
+    public float FirstDelay { get; set; } = 120;
+    public float Interval { get; set; } = 100;
+    public float IntervalRandom { get; set; } = 30;
+    public float Warning { get; set; } = 20;
+    public int Resources { get; set; } = 60;
+    public int Points { get; set; } = 40;
+    public List<TroopKind> Troops { get; set; } = new();
+}
+
+public sealed class BossTuning
+{
+    public float FirstDelay { get; set; } = 150;
+    public float Respawn { get; set; } = 200;
+    public float Hp { get; set; } = 2600;
+    public float HpPerEra { get; set; } = 0.9f;
+    public float Damage { get; set; } = 45;
+    public float DamagePerEra { get; set; } = 0.7f;
+    public float Cooldown { get; set; } = 2.2f;
+    public float Aggro { get; set; } = 300;
+    public float Leash { get; set; } = 520;
+    public float Regen { get; set; } = 0.04f;
+    public int Points { get; set; } = 120;
+    public int PointsPerEra { get; set; } = 15;
+    public int Resources { get; set; } = 100;
+}
+
+public sealed class PortalTuning
+{
+    public int Max { get; set; } = 8;
+    public float Interval { get; set; } = 40;
+    public int Troops { get; set; } = 8;
+}
+
+public sealed class ShrineTuning
+{
+    public float CaptureTime { get; set; } = 4;
+    public float DecayTime { get; set; } = 6;
+    public float Radius { get; set; } = 80;
+    public float WindSpeed { get; set; } = 0.15f;
+    public float LifeRegen { get; set; } = 0.015f;
+    public float PowerDamage { get; set; } = 0.12f;
+}
+
+public sealed class EventsTuning
+{
+    public float FirstAfter { get; set; } = 150;
+    public float Interval { get; set; } = 140;
+    public float IntervalRandom { get; set; } = 60;
+    public int MeteorCount { get; set; } = 14;
+    public float MeteorDamage { get; set; } = 0.25f;
+    public float StormDuration { get; set; } = 25;
+    public float StormSpeed { get; set; } = 0.72f;
+    public int MigrationBubbles { get; set; } = 45;
+}
+
+public sealed class AiTuning
+{
+    public float ThinkInterval { get; set; } = 0.8f;
+    public float HuntRadiusStart { get; set; } = 400;
+    public float HuntRadiusEnd { get; set; } = 800;
+    public float Ramp { get; set; } = 1000;
+    public float MemorySeconds { get; set; } = 15;
+    public float BubbleSight { get; set; } = 900;
+}
+
+public sealed class DifficultyDef
+{
+    public float Grace { get; set; } = 480;
+    public float RatioStart { get; set; } = 2;
+    public float RatioEnd { get; set; } = 1.2f;
+    public float Tactics { get; set; } = 0.45f;
+    public float Gain { get; set; } = 1;
+}
+
+public sealed class QuickModeTuning
+{
+    public float TimeFactor { get; set; } = 0.35f;
+    public float ZoneFactor { get; set; } = 0.32f;
+    public float EraFactor { get; set; } = 0.45f;
+    public float Grace { get; set; } = 60;
+    public float Ramp { get; set; } = 300;
+    public int StartTroops { get; set; } = 6;
+}
+
+public sealed class VisionTuning
+{
+    public int Cell { get; set; } = 80;
+    public float Chief { get; set; } = 560;
+    public float Troop { get; set; } = 230;
+    public float Tank { get; set; } = 280;
+}
+
+/// <summary>Clans rivaux et personnalités (data/bots.json).</summary>
+public sealed class BotsDef
+{
+    public List<ClanDef> Clans { get; set; } = new();
+    public List<PersonalityDef> Personalities { get; set; } = new();
+    public List<string> PersonalityPool { get; set; } = new();
+
+    public PersonalityDef Personality(string id) => Personalities.FirstOrDefault(p => p.Id == id) ?? Personalities[0];
+}
+
+public sealed class ClanDef
+{
+    public string Name { get; set; } = "";
+    public string Color { get; set; } = "#ffffff";
+
+    /// <summary>Couleur au format 0xRRGGBB.</summary>
+    public uint ColorRgb => System.Convert.ToUInt32(Color.TrimStart('#'), 16);
+}
+
+/// <summary>Personnalité d'un bot (voir data/bots.json pour le sens de chaque champ).</summary>
+public sealed class PersonalityDef
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public float Hunt { get; set; } = 1;
+    public float HuntRange { get; set; } = 1;
+    public float Flee { get; set; } = 1.3f;
+    public float Bubble { get; set; } = 1;
+    public float Objective { get; set; } = 1;
+    public float Charge { get; set; } = 1;
+    public float WarCry { get; set; } = 1;
+    public float Retreat { get; set; } = 1;
+    public float[] Buy { get; set; } = { 0.4f, 0.4f, 0.2f };
+    public int Travel { get; set; } = 3;
+    public int Fight { get; set; }
+    public int Idle { get; set; }
 }
 
 /// <summary>Réglages du combat et des récompenses (voir data/tuning.json pour le sens de chaque champ).</summary>

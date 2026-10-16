@@ -65,11 +65,13 @@ public partial class ArmyRenderer : Node2D
         foreach (var army in _session.World.Armies)
         {
             if (!army.Alive || army.General.Dead) continue;
+            if (army != local && !_session.CanSee(army.General.Position)) continue; // brouillard de guerre
             DrawChief(army, DisplayPosition(army.General), army == local);
         }
         foreach (var army in _session.World.Armies)
         {
             if (!army.Alive || army.General.Dead) continue;
+            if (army != local && !_session.CanSee(army.General.Position)) continue;
             DrawNameTag(army, DisplayPosition(army.General), army == local, zoom);
         }
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);

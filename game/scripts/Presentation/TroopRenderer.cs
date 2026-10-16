@@ -36,9 +36,11 @@ public partial class TroopRenderer : Node2D
         {
             if (!army.Alive) continue;
             var team = CoreConvert.ColorOf(army.ColorRgb);
+            bool mine = army == _session.LocalArmy;
             foreach (var u in army.Units)
             {
                 if (u.Dead) continue;
+                if (!mine && !_session.CanSee(u.Position)) continue; // caché par le brouillard de guerre
                 var pos = u.PreviousPosition.ToGodot().Lerp(u.Position.ToGodot(), alpha);
                 if (!view.HasPoint(pos)) continue;
                 if (simple) { DrawSimple(u, pos, team); continue; }

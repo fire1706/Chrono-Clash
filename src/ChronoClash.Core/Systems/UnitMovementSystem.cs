@@ -46,6 +46,7 @@ public static class UnitMovementSystem
         u.TickVisualTimers(dt);
         if (u.WarCryTime > 0) u.WarCryTime -= dt;
         TrackVeteran(world, army, u, events);
+        if (army.Bonus.Regen > 0 && u.Hp < u.MaxHp) u.Hp = MathF.Min(u.MaxHp, u.Hp + u.MaxHp * army.Bonus.Regen * dt); // sanctuaire de vie
 
         // 1. Ma place dans la formation (rapprochée du chef pendant un retrait, et si elle tombe dans un obstacle).
         bool retreating = army.RetreatTime > 0;
@@ -115,7 +116,7 @@ public static class UnitMovementSystem
         float distance = delta.Length, farFromSlot = Vec2.Distance(slot, u.Position);
         float follow = chief.Sprinting ? MovementTuning.SprintMultiplier * T.SprintFollowFactor : retreating ? 0.95f : 1f;
         float cry = u.WarCryTime > 0 ? tactics.WarCry.Speed : 1f;
-        float maxSpeed = stats.Speed * follow * cry * (toSlot && farFromSlot > T.CatchUpDistance ? T.CatchUpMultiplier : run) * terrain.SpeedFactor(u.Position.X, u.Position.Y);
+        float maxSpeed = stats.Speed * follow * cry * army.Bonus.Speed * world.WeatherSpeed * (toSlot && farFromSlot > T.CatchUpDistance ? T.CatchUpMultiplier : run) * terrain.SpeedFactor(u.Position.X, u.Position.Y);
         float wanted = stop ? 0 : MathF.Min(maxSpeed, u.ChargeTime > 0 ? maxSpeed : distance * T.ArrivalBraking);
         var direction = distance > 0.5f ? delta / distance : Vec2.Zero;
         u.Velocity += (direction * wanted - u.Velocity) * MathF.Min(1, T.Acceleration * dt);
@@ -270,7 +271,7 @@ public static class UnitMovementSystem
                 foreach (var other in Neighbors)
                 {
                     if (other == u || other.IsDead) continue;
-                    bool otherIsChief = other is General;
+                    bool otherIsChief = other is not Unit; // chef ou boss : il ne recule pas
                     if (!otherIsChief && ((Unit)other).Id <= u.Id) continue; // chaque paire une seule fois
                     var d = other.Position - u.Position;
                     float min = (u.Radius + other.BodyRadius) * T.SeparationFactor, d2 = d.LengthSquared;

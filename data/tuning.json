@@ -45,6 +45,62 @@
     "bonusPerLevel": 0.1           // +10 % de dégâts et de vie par chevron
   },
 
+  // La zone battle royale : chaque phase attend (wait), puis rétrécit (shrink) jusqu'au rayon indiqué.
+  // damage = part de la vie maximale perdue par seconde par chaque troupe ou chef HORS de la zone.
+  "zone": {
+    "damageTick": 0.5,
+    "phases": [
+      { "wait": 240, "shrink": 90, "radius": 4787, "damage": 0.015 },
+      { "wait": 120, "shrink": 70, "radius": 2957, "damage": 0.03 },
+      { "wait": 100, "shrink": 60, "radius": 1760, "damage": 0.05 },
+      { "wait": 80,  "shrink": 50, "radius": 986,  "damage": 0.08 },
+      { "wait": 60,  "shrink": 40, "radius": 493,  "damage": 0.12 },
+      { "wait": 45,  "shrink": 35, "radius": 183,  "damage": 0.18 },
+      { "wait": 30,  "shrink": 30, "radius": 0,    "damage": 0.25 }
+    ]
+  },
+
+  // La carte vivante : largages, boss, portails temporels, sanctuaires.
+  "objectives": {
+    "crate":   { "firstDelay": 120, "interval": 100, "intervalRandom": 30, "warning": 20, "resources": 60, "points": 40, "troops": ["Warrior", "Warrior", "Ranged", "Tank"] },
+    "boss":    { "firstDelay": 150, "respawn": 200, "hp": 2600, "hpPerEra": 0.9, "damage": 45, "damagePerEra": 0.7, "cooldown": 2.2,
+                 "aggro": 300, "leash": 520, "regen": 0.04, "points": 120, "pointsPerEra": 15, "resources": 100 },
+    "portals": { "max": 8, "interval": 40, "troops": 8 },   // un portail fait passer jusqu'à 8 troupes à l'ère suivante
+    "shrines": { "captureTime": 4, "decayTime": 6, "radius": 80, "windSpeed": 0.15, "lifeRegen": 0.015, "powerDamage": 0.12 }
+  },
+
+  // Événements aléatoires : pluie de météores, orage, migration de bulles.
+  "events": {
+    "firstAfter": 150, "interval": 140, "intervalRandom": 60,
+    "meteorCount": 14, "meteorDamage": 0.25,
+    "stormDuration": 25, "stormSpeed": 0.72,
+    "migrationBubbles": 45
+  },
+
+  // Comportement des bots (voir aussi data/bots.json pour les personnalités).
+  "ai": {
+    "thinkInterval": 0.8,          // secondes entre deux décisions d'un bot
+    "huntRadiusStart": 400,        // distance de chasse au début de la partie…
+    "huntRadiusEnd": 800,          // … et après « ramp » secondes
+    "ramp": 1000,
+    "memorySeconds": 15,           // un bot se souvient de ta dernière position pendant 15 s
+    "bubbleSight": 900             // distance à laquelle un bot repère les bulles
+  },
+
+  // Difficulté des bots : grace = secondes avant qu'ils chassent ; ratioStart/ratioEnd = combien ils veulent être
+  // plus forts que leur proie (au début / en fin de partie) ; tactics = fréquence des tactiques ; gain = revenus des bulles.
+  "difficulty": {
+    "Easy":   { "grace": 600, "ratioStart": 2.5, "ratioEnd": 1.45, "tactics": 0.2,  "gain": 0.85 },
+    "Normal": { "grace": 480, "ratioStart": 2.0, "ratioEnd": 1.2,  "tactics": 0.45, "gain": 1.0 },
+    "Hard":   { "grace": 300, "ratioStart": 1.6, "ratioEnd": 1.05, "tactics": 0.7,  "gain": 1.2 }
+  },
+
+  // Partie rapide : tout va plus vite.
+  "quickMode": { "timeFactor": 0.35, "zoneFactor": 0.32, "eraFactor": 0.45, "grace": 60, "ramp": 300, "startTroops": 6 },
+
+  // Brouillard de guerre : distances de vue (les bots utilisent les mêmes, ils ne trichent pas).
+  "vision": { "cell": 80, "chief": 560, "troop": 230, "tank": 280 },
+
   "debug": {
     "spawnTroopsCount": 20,        // F4 : troupes ajoutées (seulement si les triches sont autorisées)
     "enemyTroopsCount": 25,        // F6 : taille du clan ennemi de test

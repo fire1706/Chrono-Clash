@@ -49,7 +49,8 @@ public partial class DebugHud : Control
             "ZQSD / flèches : marcher · clic droit : aller (maintenu = suivre) · Maj + clic droit : ajouter une étape · Espace : sprint · X : halte\n" +
             "1 charge · 2 retrait · 3 viser (curseur) · R cri de guerre · 4 / 5 / 6 : acheter · Tab ou 7 8 9 0 : formation · F : éditeur\n" +
             "Tests : F4 +20 troupes · F6 clan ennemi (Maj + F6 : 2 ères d'avance) · F7 +50 ★\n" +
-            "Molette : zoom · Y : verrouiller · C : recentrer · clic molette : glisser · F2 : nouvelle carte · F3 : cacher ce panneau";
+            "Molette : zoom · Y : verrouiller · C : recentrer · clic molette : glisser · L : classement\n" +
+            "F2 : nouvelle carte (thème suivant) · F8 : changer de mode · F9 : changer de difficulté · F10 : brouillard on/off · F3 : cacher ce panneau";
 
     }
 }

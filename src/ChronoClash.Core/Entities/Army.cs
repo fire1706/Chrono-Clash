@@ -36,6 +36,10 @@ public sealed class Army
     /// <summary>Couleur du clan en hexadécimal RVB, par exemple 0xF0B52A pour l'or.</summary>
     public uint ColorRgb { get; set; }
     public bool IsBot { get; set; }
+    /// <summary>Clan de test qui ne bouge pas (touche F6). Les bots l'ignorent pour réfléchir.</summary>
+    public bool IsPassive { get; set; }
+    /// <summary>« Cerveau » du bot (null pour un humain).</summary>
+    public AI.BotBrain? Brain { get; set; }
     public General General { get; }
 
     // ---- État dans la partie ----
@@ -44,6 +48,10 @@ public sealed class Army
     public Army? LastHitBy { get; set; }
     /// <summary>Moment de l'élimination (secondes de partie), ou -1.</summary>
     public double EliminatedAt { get; set; } = -1;
+    /// <summary>Classement final (1 = vainqueur), 0 tant que le clan est en jeu.</summary>
+    public int Placement { get; set; }
+    /// <summary>Bonus des sanctuaires tenus (vitesse, soin, dégâts).</summary>
+    public ArmyBonus Bonus { get; set; } = ArmyBonus.None;
 
     // ---- Armée ----
     /// <summary>Les troupes du clan (les mortes sont retirées à la fin de chaque tick).</summary>

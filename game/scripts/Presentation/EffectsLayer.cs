@@ -57,7 +57,7 @@ public partial class EffectsLayer : Node2D
             case VeteranEvent v when v.ArmyId == _session.LocalArmy.Id:
                 _floats.Add((new Vector2(v.X, v.Y - 14), "Vétéran " + new string('★', v.Level), StarGold, 0));
                 break;
-            case ProjectileImpactEvent p when p.Splash > 0:
+            case ProjectileImpactEvent p when p.Splash > 0 && _session.CanSee(new Core.Mathematics.Vec2(p.X, p.Y)):
                 _explosions.Add((new Vector2(p.X, p.Y), p.Splash, 0, p.Kind == "plasma"));
                 break;
             case MeleeHitEvent m when _sparks.Count < 120:
@@ -68,6 +68,19 @@ public partial class EffectsLayer : Node2D
                 break;
             case TacticUsedEvent t when t.Tactic == Core.Commands.TacticKind.Aim && t.ArmyId == _session.LocalArmy.Id:
                 _bursts.Add((new Vector2(t.X, t.Y), new Color(1, 0.3f, 0.25f), 60, 0));
+                break;
+            case MeteorImpactEvent mi:
+                _explosions.Add((new Vector2(mi.X, mi.Y), 70, 0, false));
+                break;
+            case CrateCollectedEvent cc:
+                _bursts.Add((new Vector2(cc.X, cc.Y), StarGold, 50, 0));
+                if (cc.ArmyId == _session.LocalArmy.Id) _floats.Add((new Vector2(cc.X, cc.Y - 30), "+60 ◆  +40 ★  +4 troupes", StarGold, 0));
+                break;
+            case PortalUsedEvent pu:
+                _bursts.Add((new Vector2(pu.X, pu.Y), new Color(0.71f, 0.42f, 1f), 70, 0));
+                break;
+            case ShrineCapturedEvent sc:
+                _bursts.Add((new Vector2(sc.X, sc.Y), CoreConvert.ColorOf(_session.World.Armies[sc.ArmyId].ColorRgb), 60, 0));
                 break;
             case ChiefPromotedEvent pr:
             {

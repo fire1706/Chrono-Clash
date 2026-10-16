@@ -30,6 +30,7 @@ public partial class GameHud : Control
     private bool _announceStays;
     private ProgressBar _eraBar = null!;
     private Label _eraLabel = null!;
+    private Label _zoneLabel = null!;
     private readonly Button[] _tactics = new Button[4];
     private static readonly string[] TacticNames = { "Charge", "Retrait", "Viser", "Cri de guerre" };
     private static readonly string[] TacticKeys = { "1", "2", "3", "R" };
@@ -70,6 +71,9 @@ public partial class GameHud : Control
         lines.AddChild(_eraLabel);
         _eraBar = new ProgressBar { MinValue = 0, MaxValue = 1, Step = 0.001, ShowPercentage = false, CustomMinimumSize = new Vector2(260, 10), MouseFilter = MouseFilterEnum.Ignore };
         lines.AddChild(_eraBar);
+        _zoneLabel = new Label();
+        _zoneLabel.AddThemeColorOverride("font_color", new Color(0.86f, 0.7f, 1f));
+        lines.AddChild(_zoneLabel);
         AddChild(_panel);
 
         // ---- Barre d'actions en bas ----
@@ -135,6 +139,21 @@ public partial class GameHud : Control
         _announceStays = stays;
     }
 
+    private static string ModeName(Core.Simulation.GameMode m) => m switch
+    {
+        Core.Simulation.GameMode.Quick => "partie rapide",
+        Core.Simulation.GameMode.Sandbox => "bac à sable",
+        Core.Simulation.GameMode.Tutorial => "tutoriel",
+        _ => "partie classique",
+    };
+
+    private static string DifficultyName(Core.Simulation.BotDifficulty d) => d switch
+    {
+        Core.Simulation.BotDifficulty.Easy => "bots faciles",
+        Core.Simulation.BotDifficulty.Hard => "bots difficiles",
+        _ => "bots normaux",
+    };
+
     /// <summary>Affiche un message court au centre en haut de l'écran.</summary>
     public void ShowChip(string text)
     {
@@ -175,10 +194,60 @@ public partial class GameHud : Control
                 ShowChip($"Évolution terminée : {data.Eras[ec.Era].Name}");
                 break;
             case ArmyEliminatedEvent el when el.ArmyId == _session.LocalArmy.Id:
-                Announce("Ton clan a été éliminé\nF2 : nouvelle partie", stays: true);
+                Announce($"Ton clan a été éliminé — {_session.LocalArmy.Placement}e place\nF2 : nouvelle partie", stays: true);
                 break;
             case ArmyEliminatedEvent el when el.KillerArmyId == _session.LocalArmy.Id:
                 Announce($"{_session.World.Armies[el.ArmyId].Name} éliminé !");
+                break;
+            case ArmyEliminatedEvent el when _session.LocalArmy.Alive && el.ClansLeft == 3:
+                Announce("Plus que trois clans !");
+                break;
+            case ArmyEliminatedEvent el when _session.LocalArmy.Alive && el.ClansLeft == 2:
+                Announce("Duel final !");
+                break;
+            case MatchEndedEvent end when end.WinnerArmyId == _session.LocalArmy.Id:
+                Announce("Victoire !\nTon clan est le dernier debout — F2 : nouvelle partie", stays: true);
+                break;
+            case MatchEndedEvent end when !_session.LocalArmy.Alive && end.WinnerArmyId >= 0:
+                ShowChip($"{_session.World.Armies[end.WinnerArmyId].Name} remporte la partie");
+                break;
+            case ZoneShrinkingEvent:
+                Announce("La zone se resserre !");
+                break;
+            case BossSpawnedEvent boss:
+                Announce($"Un boss est apparu !\n{boss.Name}");
+                break;
+            case BossKilledEvent bk when bk.KillerArmyId == _session.LocalArmy.Id:
+                Announce($"Géant terrassé !\n+{bk.Points} ★  +{bk.Resources} ◆");
+                break;
+            case BossKilledEvent bk when bk.KillerArmyId >= 0:
+                ShowChip($"{_session.World.Armies[bk.KillerArmyId].Name} a terrassé {bk.Name}");
+                break;
+            case CrateAnnouncedEvent:
+                ShowChip("Largage temporel dans 20 s : regarde la carte");
+                break;
+            case CrateCollectedEvent cc when cc.ArmyId == _session.LocalArmy.Id:
+                ShowChip("Largage récupéré : +60 ◆  +40 ★  +4 troupes");
+                break;
+            case PortalUsedEvent pu when pu.ArmyId == _session.LocalArmy.Id:
+                ShowChip($"Portail temporel : {pu.Count} troupes passent à l'ère suivante");
+                break;
+            case ShrineCapturedEvent sc when sc.ArmyId == _session.LocalArmy.Id:
+                ShowChip(sc.Kind switch
+                {
+                    Core.Entities.ShrineKind.Wind => "Sanctuaire du vent capturé : +15 % de vitesse",
+                    Core.Entities.ShrineKind.Life => "Sanctuaire de vie capturé : tes troupes se soignent",
+                    _ => "Sanctuaire de puissance capturé : +12 % de dégâts",
+                });
+                break;
+            case WorldEventStartedEvent we:
+                switch (we.Kind)
+                {
+                    case "meteors": Announce("Pluie de météores !"); break;
+                    case "storm": Announce("Orage : toutes les armées ralentissent"); break;
+                    case "stormEnd": ShowChip("L'orage se calme"); break;
+                    case "migration": Announce("Migration de bulles !"); break;
+                }
                 break;
         }
     }
@@ -217,7 +286,7 @@ public partial class GameHud : Control
         }
         else if (army.Era < Core.Entities.Army.MaxEra)
         {
-            int from = data.Eras[army.Era].Threshold, to = data.Eras[army.Era + 1].Threshold;
+            int from = _session.World.EraThreshold(army.Era), to = _session.World.EraThreshold(army.Era + 1);
             _eraLabel.Text = $"{data.Eras[army.Era + 1].Short} dans {Math.Max(0, to - army.Points)} ★   ·   {army.Kills} ennemis abattus";
             _eraBar.Value = Math.Clamp((army.Points - from) / (double)(to - from), 0, 1);
         }
@@ -226,6 +295,16 @@ public partial class GameHud : Control
             _eraLabel.Text = $"Dernière ère atteinte   ·   {army.Kills} ennemis abattus";
             _eraBar.Value = 1;
         }
+
+        // Zone et clans en vie.
+        var world = _session.World;
+        float left = Core.Systems.ZoneSystem.TimeLeft(world);
+        string zone = world.Zone.Stage == Core.Simulation.ZoneStage.Final ? "Zone finale"
+            : left < 0 ? "Pas de zone (bac à sable)"
+            : world.Zone.Stage == Core.Simulation.ZoneStage.Waiting ? $"Zone : se resserre dans {(int)left / 60}:{(int)left % 60:00}"
+            : $"Zone : se resserre… {(int)left / 60}:{(int)left % 60:00}";
+        if (world.Zone.IsOutside(army.General.Position) && world.Zone.DamagePercent > 0 && !army.General.Dead) zone += "   — tu es HORS de la zone !";
+        _zoneLabel.Text = $"{zone}\n{world.Armies.Count(a => a.Alive && !a.IsPassive)} clans en vie   ·   {ModeName(world.Settings.Mode)} · {DifficultyName(world.Settings.Difficulty)}";
 
         // Placement (l'écran peut changer de taille).
         var size = GetViewportRect().Size;

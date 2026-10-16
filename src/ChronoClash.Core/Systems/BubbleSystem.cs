@@ -11,7 +11,8 @@ namespace ChronoClash.Core.Systems;
 /// Bulles de troupes et étoiles : apparition au fil de la partie et ramassage.
 /// Une bulle de troupe donne une troupe de son type + des ressources ◆ + 1 point ★.
 /// Une étoile donne des points ★. Tout chef ou toute troupe qui touche une bulle la ramasse pour son clan.
-/// (Étape M4 : les bulles n'apparaîtront plus que dans la zone sûre.)
+/// Les nouvelles bulles apparaissent dans la zone sûre ; celles restées dehors finissent par disparaître,
+/// et les étoiles se raréfient à mesure que la zone se resserre.
 /// </summary>
 public static class BubbleSystem
 {
@@ -44,8 +45,14 @@ public static class BubbleSystem
         if (world.StarTimer <= 0)
         {
             world.StarTimer = tuning.StarSpawnInterval;
-            if (world.Bubbles.Count(b => b.Kind == BubbleKind.Star) < tuning.StarTarget) TrySpawn(world, BubbleKind.Star, null, 0, mature: false);
+            // Moins d'étoiles quand la zone rétrécit (au minimum un quart de l'objectif).
+            float share = MathUtil.Clamp(world.Zone.Radius / MathF.Max(1, world.Zone.InitialRadius), 0.25f, 1f);
+            if (world.Bubbles.Count(b => b.Kind == BubbleKind.Star) < tuning.StarTarget * share) TrySpawn(world, BubbleKind.Star, null, 0, mature: false);
         }
+
+        // Les bulles restées hors de la zone disparaissent peu à peu (environ 5 % par seconde).
+        if (world.Zone.DamagePercent > 0)
+            world.Bubbles.RemoveAll(b => world.Zone.IsOutside(b.Position) && world.Random.NextDouble() < dt * 0.05);
 
         // Ramassage (on parcourt à l'envers pour pouvoir retirer des bulles en cours de route).
         for (int i = world.Bubbles.Count - 1; i >= 0; i--)
@@ -72,6 +79,8 @@ public static class BubbleSystem
         {
             var kind = (TroopKind)(int)bubble.Kind;
             resources = world.Data.Troop(kind).Gain;
+            // Difficulté : les bots gagnent un peu plus (difficile) ou un peu moins (facile) de ressources.
+            if (army.IsBot) resources = (int)MathF.Round(resources * world.Difficulty.Gain);
             points = world.Data.Tuning.Bubbles.PointsPerTroopBubble;
             Recruitment.AddUnit(world, army, kind, bubble.Position);
         }
@@ -100,7 +109,6 @@ public static class BubbleSystem
     /// </summary>
     private static void TrySpawn(World world, BubbleKind kind, Vec2? near, float radius, bool mature)
     {
-        float bubbleRadius = kind == BubbleKind.Star ? world.Data.Star.BubbleRadius : world.Data.Troop((TroopKind)(int)kind).BubbleRadius;
         for (int tries = 0; tries < 30; tries++)
         {
             Vec2 p;
@@ -109,10 +117,24 @@ public static class BubbleSystem
                 float a = (float)world.Random.NextDouble() * MathF.PI * 2, r = 120 + (float)world.Random.NextDouble() * radius;
                 p = center + Vec2.FromAngle(a) * r;
             }
-            else p = new Vec2(200 + (float)world.Random.NextDouble() * (Terrain.WorldSize - 400), 200 + (float)world.Random.NextDouble() * (Terrain.WorldSize - 400));
+            else
+            {
+                // N'importe où dans la zone sûre actuelle (toute la carte au début).
+                var z = world.Zone;
+                float r = MathF.Min(z.Radius, Terrain.WorldSize), a = (float)world.Random.NextDouble() * MathF.PI * 2;
+                p = z.Center + Vec2.FromAngle(a) * (MathF.Sqrt((float)world.Random.NextDouble()) * r);
+                if (p.X < 200 || p.Y < 200 || p.X > Terrain.WorldSize - 200 || p.Y > Terrain.WorldSize - 200) continue;
+            }
             if (!world.Terrain.IsWalkable(p, 18) || world.Terrain.IsWater(p.X, p.Y)) continue;
-            world.Bubbles.Add(new Bubble(world.NextEntityId(), kind, p, bubbleRadius, (float)world.Random.NextDouble() * 6.28f) { Age = mature ? 1 : 0 });
+            Add(world, kind, p, mature);
             return;
         }
+    }
+
+    /// <summary>Pose une bulle à un endroit précis (météores, migrations…).</summary>
+    public static void Add(World world, BubbleKind kind, Vec2 p, bool mature)
+    {
+        float bubbleRadius = kind == BubbleKind.Star ? world.Data.Star.BubbleRadius : world.Data.Troop((TroopKind)(int)kind).BubbleRadius;
+        world.Bubbles.Add(new Bubble(world.NextEntityId(), kind, p, bubbleRadius, (float)world.Random.NextDouble() * 6.28f) { Age = mature ? 1 : 0 });
     }
 }

@@ -16,7 +16,7 @@ public static class EvolutionSystem
         foreach (var army in world.Armies)
         {
             if (!army.Alive) continue;
-            if (army.Evolution == null && army.Era < Army.MaxEra && army.Points >= world.Data.Eras[army.Era + 1].Threshold) Start(world, army, events);
+            if (army.Evolution == null && army.Era < Army.MaxEra && army.Points >= world.EraThreshold(army.Era + 1)) Start(world, army, events);
             if (army.Evolution != null) Progress(world, army, dt, events);
         }
     }
@@ -59,7 +59,8 @@ public static class EvolutionSystem
         events.Add(new EraCompletedEvent(world.Tick, army.Id, army.Era));
     }
 
-    private static void EvolveOne(World world, Body body, int era)
+    /// <summary>Fait passer un seul corps à une ère (utilisé aussi par les portails temporels).</summary>
+    public static void EvolveOne(World world, Body body, int era)
     {
         if (body.Dead || body.Era >= era) return;
         if (body is General g) g.ApplyEraStats(world.Data, era);
