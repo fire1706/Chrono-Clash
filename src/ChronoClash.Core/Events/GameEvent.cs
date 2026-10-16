@@ -7,3 +7,6 @@ namespace ChronoClash.Core.Events;
 public abstract record GameEvent(long Tick);
 
 public sealed record MatchStartedEvent(long Tick) : GameEvent(Tick);
+
+/// <summary>Le chemin demandé est impossible (destination dans l'eau profonde, île inaccessible…).</summary>
+public sealed record PathFailedEvent(long Tick, int PlayerId) : GameEvent(Tick);

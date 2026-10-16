@@ -1,5 +1,9 @@
 using ChronoClash.Core.Commands;
+using ChronoClash.Core.Entities;
 using ChronoClash.Core.Events;
+using ChronoClash.Core.Mathematics;
+using ChronoClash.Core.Map;
+using ChronoClash.Core.Systems;
 
 namespace ChronoClash.Core.Simulation;
 
@@ -10,6 +14,7 @@ namespace ChronoClash.Core.Simulation;
 public sealed class Match
 {
     private readonly List<PlayerCommand> _pendingCommands = new();
+    private readonly List<PlayerCommand> _commandsThisTick = new();
     private readonly List<GameEvent> _events = new();
 
     public Match(MatchSettings settings)
@@ -25,6 +30,24 @@ public sealed class Match
 
     /// <summary>Événements produits depuis le dernier appel à Advance/Step (sons, UI, annonceur).</summary>
     public IReadOnlyList<GameEvent> Events => _events;
+
+    /// <summary>
+    /// Ajoute un clan à la partie, sur le prochain point de départ libre.
+    /// Renvoie null si la partie est pleine (10 clans).
+    /// </summary>
+    public Army? AddArmy(int playerId, string name, uint colorRgb, bool isBot)
+    {
+        int slot = World.Armies.Count;
+        if (slot >= World.Terrain.SpawnPoints.Count) return null;
+        var spawn = World.Terrain.SpawnPoints[slot];
+        var general = new General(spawn);
+        // Au départ, le chef regarde vers le centre de la carte.
+        float c = Terrain.WorldSize / 2f;
+        general.Angle = (new Vec2(c, c) - spawn).Angle;
+        var army = new Army(slot, playerId, name, colorRgb, isBot, general) { FormationAngle = general.Angle };
+        World.Armies.Add(army);
+        return army;
+    }
 
     /// <summary>Ajoute un ordre de joueur (humain ou bot). Il sera appliqué au prochain tick.</summary>
     public void Enqueue(PlayerCommand command) => _pendingCommands.Add(command);
@@ -45,10 +68,24 @@ public sealed class Match
         StepOnce();
     }
 
+    /// <summary>
+    /// Un tick de simulation. Les systèmes s'exécutent TOUJOURS dans cet ordre (voir docs/ARCHITECTURE.md §3).
+    /// Pour ajouter un système, on l'insère ici à sa place.
+    /// </summary>
     private void StepOnce()
     {
-        // M1+ : les systèmes s'exécuteront ici, toujours dans le même ordre (voir docs/ARCHITECTURE.md §3).
+        float dt = (float)TickClock.TickDuration;
+
+        // On fige la liste des ordres de ce tick (de nouveaux ordres peuvent arriver pendant le calcul).
+        _commandsThisTick.Clear();
+        _commandsThisTick.AddRange(_pendingCommands);
         _pendingCommands.Clear();
+
+        CommandSystem.Apply(World, _commandsThisTick, _events);   // 1. ordres des joueurs
+        // 2. bots (M4)
+        GeneralMovementSystem.Update(World, dt);                    // 3. déplacement des chefs
+        // 4+. formations, troupes, combat, ères, zone… (M2 à M4)
+
         World.Tick++;
     }
 }

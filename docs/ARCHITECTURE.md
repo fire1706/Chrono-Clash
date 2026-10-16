@@ -29,7 +29,7 @@ chrono-clash/
 │  │  ├─ Map/                      MapGenerator, Terrain, NavGrid, Pathfinder, ThemeDef
 │  │  ├─ AI/                       BotController, Personality, Perception, Decision
 │  │  ├─ Commands/                 PlayerCommand et ses sous-types
-│  │  ├─ Net/                      ITransport, messages, Snapshot, SnapshotWriter/Reader
+│  │  ├─ Net/                      ITransport, LocalTransport, CommandCodec, HostSession, ClientSession, (M5 : Snapshot)
 │  │  ├─ Data/                     UnitDef, EraDef, TuningDef, DataLoader (JSON)
 │  │  ├─ Stats/                    MatchStats, Achievements, Records
 │  │  └─ Events/                   GameEvent (kill, évolution, largage…) pour l'UI et le son
@@ -38,7 +38,7 @@ chrono-clash/
 │  ├─ project.godot
 │  ├─ scripts/
 │  │  ├─ Bootstrap/                GameRoot, SceneRouter
-│  │  ├─ Net/                      EnetTransport, LocalTransport, NetSession, Lobby
+│  │  ├─ Net/                      GameSession, (M5 : EnetTransport, Lobby)
 │  │  ├─ Presentation/             MapRenderer, ArmyRenderer, UnitVisualRegistry, FogRenderer, EffectsLayer, Minimap
 │  │  ├─ UI/                       Hud, TitleScreen, LobbyScreen, PauseMenu, SettingsMenu, Tutorial, EndScreen, FormationEditor
 │  │  ├─ Input/                    InputMapper (raccourcis personnalisables) → PlayerCommand
@@ -121,7 +121,7 @@ Le cœur ne joue aucun son et n'affiche rien. Il publie des `GameEvent` (`UnitKi
 
 | Mode | Simulation | Transport | Joueurs |
 |---|---|---|---|
-| **Solo, hors ligne** | Sur ta machine | `LocalTransport` (en mémoire) | Toi + 9 bots |
+| **Solo, hors ligne** | Sur ta machine | `LocalTransport` (en mémoire, dans le cœur) | Toi + 9 bots |
 | **Héberger** | Sur la machine de l'hôte | `EnetTransport` (UDP) en écoute | Jusqu'à 10 humains, les places vides prises par des bots |
 | **Rejoindre** | Chez l'hôte | `EnetTransport` (UDP) client | — |
 | Serveur dédié (plus tard) | `ChronoClash.Server`, sans affichage | `EnetTransport` | Jusqu'à 10 humains |
@@ -223,7 +223,7 @@ Le guide du graphiste (`docs/ART_GUIDE.md`) précisera les tailles, l'orientatio
 ## 9. Versions à installer
 
 - **Godot 4**, dernière version stable, **édition .NET**. Attention à bien prendre l'édition .NET.
-- **SDK .NET** dans la version demandée par cette version de Godot, indiquée sur la page de téléchargement.
+- **SDK .NET 10** (l'équipe utilise la 10.0.402). Tous les projets ciblent `net10.0`.
 - Un éditeur de code : **Visual Studio Code** avec l'extension C#, ou **JetBrains Rider**.
 - **GitHub Desktop** et **Git LFS**.
 

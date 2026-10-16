@@ -14,7 +14,7 @@ jobs:
           lfs: false   # inutile de télécharger les images et les sons pour tester le cœur
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - name: Tests du cœur
         run: dotnet test tests/ChronoClash.Core.Tests/ChronoClash.Core.Tests.csproj --configuration Release
       - name: Compilation du serveur sans affichage

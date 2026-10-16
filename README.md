@@ -10,23 +10,27 @@ L'architecture est décrite dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). L
 | Outil | Version |
 |---|---|
 | Godot | **4.7.2, édition .NET** (fichier `Godot_v4.7.2-stable_mono_win64`) |
-| SDK .NET | **8** (ou plus récent) |
+| SDK .NET | **10** (version 10.0.402 ou plus récente) |
 | Git LFS | dernière version |
 
 Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait pas exécuter le C#**.
 
 ## Installation (à faire une seule fois)
 
-1. Installer le **SDK .NET 8** depuis le site officiel de Microsoft (dotnet.microsoft.com), puis redémarrer l'ordinateur.
+1. Installer le **SDK .NET 10** depuis le site officiel de Microsoft (dotnet.microsoft.com), puis redémarrer l'ordinateur.
 2. Télécharger **Godot 4.7.2 édition .NET** depuis godotengine.org : il faut choisir le bouton « .NET ». Le dossier s'appelle `Godot_v4.7.2-stable_mono_win64`.
 3. Installer **GitHub Desktop** (desktop.github.com). Git LFS est inclus.
 4. Cloner le dépôt avec GitHub Desktop : *File → Clone repository*.
 
 ## Lancer le jeu
 
-1. Ouvrir Godot .NET, cliquer sur **Importer** et choisir le fichier `game/project.godot`.
+1. Ouvrir Godot .NET. Dans la **liste des projets**, cliquer sur **Importer** et choisir le fichier `game/project.godot` (et **pas** la racine du dépôt).
 2. Cliquer sur **Build** (marteau en haut à droite), puis sur **Lancer** (▶).
-3. Étape M0 : une fenêtre affiche « Chrono Clash » avec un compteur de ticks qui avance. Si les chiffres avancent, tout est bien installé.
+3. Étape M1 : la carte s'affiche avec ton chef de clan. Tu peux te promener :
+   - **ZQSD** (AZERTY) / **WASD** (QWERTY) ou flèches : marcher · **Espace** maintenu : sprint · **X** : halte
+   - **Clic droit** : aller à un point (maintenu = suivre la souris) · **Maj + clic droit** : ajouter une étape
+   - **Molette** : zoom · **Y** : verrouiller/libérer la caméra · **C** : recentrer · **clic molette glissé** : déplacer la vue
+   - **Minicarte** : clic gauche pour regarder, clic droit pour y aller · **F2** : nouvelle carte avec le thème suivant
 
 ## Lancer les tests et le serveur (optionnel)
 
