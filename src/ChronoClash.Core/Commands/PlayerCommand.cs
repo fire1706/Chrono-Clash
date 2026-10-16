@@ -22,3 +22,9 @@ public sealed record SetFormationCellsCommand(long Tick, int PlayerId, int Index
 
 /// <summary>Test : ajoute des troupes autour du chef. Refusé par l'hôte si la partie n'autorise pas les triches.</summary>
 public sealed record DebugSpawnTroopsCommand(long Tick, int PlayerId, int Count) : PlayerCommand(Tick, PlayerId);
+
+/// <summary>Test : fait apparaître un clan ennemi immobile devant le chef (EraOffset = ères d'écart avec le joueur).</summary>
+public sealed record DebugSpawnEnemyCommand(long Tick, int PlayerId, int Count, int EraOffset) : PlayerCommand(Tick, PlayerId);
+
+/// <summary>Test : ajoute des points ★ (pour essayer les changements d'ère).</summary>
+public sealed record DebugAddPointsCommand(long Tick, int PlayerId, int Amount) : PlayerCommand(Tick, PlayerId);

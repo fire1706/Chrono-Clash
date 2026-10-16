@@ -45,6 +45,12 @@ public sealed class World
     /// <summary>Bulles de troupes et étoiles présentes sur la carte.</summary>
     public List<Bubble> Bubbles { get; } = new();
 
+    /// <summary>Projectiles en vol.</summary>
+    public List<Projectile> Projectiles { get; } = new();
+
+    /// <summary>Morts du tick en cours, traitées à la fin du tick par DeathSystem.</summary>
+    public List<Systems.PendingDeath> PendingDeaths { get; } = new();
+
     /// <summary>Rangement des chefs et troupes par zone (reconstruit à chaque tick).</summary>
     public SpatialGrid Grid { get; } = new();
 
@@ -59,6 +65,23 @@ public sealed class World
 
     /// <summary>Nouvel identifiant unique (troupes, bulles…).</summary>
     public int NextEntityId() => _nextEntityId++;
+
+    /// <summary>
+    /// Crée un clan avec son chef. Sans position, il prend le prochain point de départ libre.
+    /// (Utilisé par Match.AddArmy pour les joueurs et les bots, et par les commandes de test.)
+    /// </summary>
+    public Army CreateArmy(int playerId, string name, uint colorRgb, bool isBot, Mathematics.Vec2? position = null)
+    {
+        int id = Armies.Count;
+        var spawn = position ?? Terrain.SpawnPoints[Math.Min(id, Terrain.SpawnPoints.Count - 1)];
+        var general = new General(spawn);
+        general.ApplyEraStats(Data, 0);
+        float c = Terrain.WorldSize / 2f;
+        general.Angle = (new Mathematics.Vec2(c, c) - spawn).Angle; // au départ, le chef regarde vers le centre de la carte
+        var army = new Army(id, playerId, name, colorRgb, isBot, general) { FormationAngle = general.Angle };
+        Armies.Add(army);
+        return army;
+    }
 
     /// <summary>Le clan contrôlé par ce joueur, ou null.</summary>
     public Army? FindArmyOfPlayer(int playerId)

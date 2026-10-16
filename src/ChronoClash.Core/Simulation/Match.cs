@@ -1,8 +1,6 @@
 using ChronoClash.Core.Commands;
 using ChronoClash.Core.Entities;
 using ChronoClash.Core.Events;
-using ChronoClash.Core.Mathematics;
-using ChronoClash.Core.Map;
 using ChronoClash.Core.Systems;
 
 namespace ChronoClash.Core.Simulation;
@@ -38,16 +36,8 @@ public sealed class Match
     /// </summary>
     public Army? AddArmy(int playerId, string name, uint colorRgb, bool isBot)
     {
-        int slot = World.Armies.Count;
-        if (slot >= World.Terrain.SpawnPoints.Count) return null;
-        var spawn = World.Terrain.SpawnPoints[slot];
-        var general = new General(spawn);
-        // Au départ, le chef regarde vers le centre de la carte.
-        float c = Terrain.WorldSize / 2f;
-        general.Angle = (new Vec2(c, c) - spawn).Angle;
-        var army = new Army(slot, playerId, name, colorRgb, isBot, general) { FormationAngle = general.Angle };
-        World.Armies.Add(army);
-        return army;
+        if (World.Armies.Count >= MatchSettings.MaxClans) return null;
+        return World.CreateArmy(playerId, name, colorRgb, isBot);
     }
 
     /// <summary>Ajoute un ordre de joueur (humain ou bot). Il sera appliqué au prochain tick.</summary>
@@ -84,11 +74,14 @@ public sealed class Match
 
         CommandSystem.Apply(World, _commandsThisTick, _events);   // 1. ordres des joueurs
         // 2. bots (M4)
+        TacticSystem.Update(World, dt);                             //    recharges et effets des tactiques
         GeneralMovementSystem.Update(World, dt);                    // 3. déplacement des chefs
         FormationSystem.Update(World);                              // 4. places dans la formation
-        UnitMovementSystem.Update(World, dt);                       // 5. déplacement des troupes (+ grille spatiale)
-        // 6-8. combat, projectiles, morts (M3)
-        // 9. évolution des ères (M3)
+        UnitMovementSystem.Update(World, dt, _events);              // 5. troupes : cible, attaque, déplacement
+        ChiefCombatSystem.Update(World, dt, _events);               // 6. les chefs attaquent
+        ProjectileSystem.Update(World, dt, _events);                // 7. projectiles
+        DeathSystem.Update(World, _events);                         // 8. morts, succession, éliminations
+        EvolutionSystem.Update(World, dt, _events);                 // 9. évolution des ères
         BubbleSystem.Update(World, dt, _events);                    // 10. bulles : apparition et ramassage
         // 11-14. objectifs, zone, vision, score (M4)
 

@@ -140,13 +140,86 @@ public sealed class EraDef
     public string Short { get; set; } = "";
     public int Threshold { get; set; }
     public string Years { get; set; } = "";
+    /// <summary>Forme « entrer dans … » pour les annonces (« Ton peuple entre dans l'ère romaine ! »).</summary>
+    public string To { get; set; } = "";
 }
 
 /// <summary>Réglages d'équilibrage (data/tuning.json).</summary>
 public sealed class TuningDef
 {
     public BubbleTuning Bubbles { get; set; } = new();
+    public CombatTuning Combat { get; set; } = new();
+    public TacticsTuning Tactics { get; set; } = new();
+    public EvolutionTuning Evolution { get; set; } = new();
+    public VeteranTuning Veterans { get; set; } = new();
     public DebugTuning Debug { get; set; } = new();
+}
+
+/// <summary>Réglages du combat et des récompenses (voir data/tuning.json pour le sens de chaque champ).</summary>
+public sealed class CombatTuning
+{
+    public float DamageMultiplier { get; set; } = 0.45f;
+    public float VictimEraPointBonus { get; set; } = 0.25f;
+    public int ChiefPoints { get; set; } = 15;
+    public int PromotedChiefPoints { get; set; } = 5;
+    public int EliminationPoints { get; set; } = 40;
+    public Dictionary<string, int> KillResources { get; set; } = new() { ["Warrior"] = 2, ["Ranged"] = 3, ["Tank"] = 6 };
+    public int ChiefResources { get; set; } = 10;
+    public int PromotedChiefResources { get; set; } = 3;
+    public int EliminationResources { get; set; } = 30;
+    public float ChiefRegenPerSecond { get; set; } = 3;
+    public float ChiefRegenDelay { get; set; } = 5;
+    public float HillRangeMultiplier { get; set; } = 1.25f;
+    public float ChargeDamageWarrior { get; set; } = 2.5f;
+    public float ChargeDamageTank { get; set; } = 3f;
+    public Dictionary<string, float> ProjectileSpeeds { get; set; } = new();
+
+    /// <summary>◆ gagnées en tuant une troupe de ce type.</summary>
+    public int ResourcesFor(TroopKind kind) => KillResources.TryGetValue(kind.ToString(), out int v) ? v : 2;
+
+    /// <summary>Vitesse d'un projectile (pixels/s), 600 par défaut si le type est inconnu.</summary>
+    public float SpeedOf(string? projectile) => projectile != null && ProjectileSpeeds.TryGetValue(projectile, out float v) ? v : 600;
+}
+
+public sealed class TacticDef
+{
+    public float Cooldown { get; set; }
+    public float Duration { get; set; }
+    /// <summary>Charge : part des guerriers et tanks qui chargent.</summary>
+    public float Share { get; set; } = 0.4f;
+    /// <summary>Charge : vitesse ; cri de guerre : bonus de vitesse.</summary>
+    public float Speed { get; set; } = 1;
+    /// <summary>Cri de guerre : portée autour du chef.</summary>
+    public float Radius { get; set; } = 340;
+    /// <summary>Cri de guerre : multiplicateur de dégâts.</summary>
+    public float Damage { get; set; } = 1;
+}
+
+public sealed class TacticsTuning
+{
+    public TacticDef Charge { get; set; } = new() { Cooldown = 12, Duration = 2.6f, Speed = 1.85f };
+    public TacticDef Retreat { get; set; } = new() { Cooldown = 14, Duration = 3 };
+    public TacticDef Aim { get; set; } = new() { Cooldown = 12, Duration = 5 };
+    public TacticDef WarCry { get; set; } = new() { Cooldown = 25, Duration = 6, Damage = 1.3f, Speed = 1.15f };
+
+    public TacticDef Of(TacticKind kind) => kind switch
+    {
+        TacticKind.Charge => Charge,
+        TacticKind.Retreat => Retreat,
+        TacticKind.Aim => Aim,
+        _ => WarCry,
+    };
+}
+
+public sealed class EvolutionTuning
+{
+    public float Duration { get; set; } = 20;
+}
+
+public sealed class VeteranTuning
+{
+    public int[] FightsForLevel { get; set; } = { 2, 4, 7 };
+    public float BonusPerLevel { get; set; } = 0.1f;
 }
 
 public sealed class BubbleTuning
@@ -163,4 +236,6 @@ public sealed class BubbleTuning
 public sealed class DebugTuning
 {
     public int SpawnTroopsCount { get; set; } = 20;
+    public int EnemyTroopsCount { get; set; } = 25;
+    public int AddPoints { get; set; } = 50;
 }

@@ -31,7 +31,13 @@ public static class GeneralMovementSystem
         // 1. D'où vient l'intention de mouvement ? Le clavier passe avant le chemin (et l'annule).
         Vec2 direction;
         float arrive = 1f;
-        if (g.InputDirection.LengthSquared > 0)
+        bool retreating = army.RetreatTime > 0;
+        if (retreating)
+        {
+            // Tactique « Retrait » : le chef recule tout droit, sans sprint, en gardant son orientation.
+            direction = army.RetreatDirection;
+        }
+        else if (g.InputDirection.LengthSquared > 0)
         {
             direction = g.InputDirection.Normalized();
             g.Path.Clear();
@@ -41,7 +47,7 @@ public static class GeneralMovementSystem
 
         // 2. Endurance et sprint.
         if (g.Exhausted && g.Stamina > T.ExhaustionRecovery) g.Exhausted = false;
-        g.Sprinting = g.WantsSprint && moving && !g.Exhausted && g.Stamina > 0;
+        g.Sprinting = g.WantsSprint && moving && !g.Exhausted && g.Stamina > 0 && !retreating;
         if (g.Sprinting)
         {
             g.Stamina = MathF.Max(0, g.Stamina - T.StaminaDrainPerSecond * dt);
@@ -56,15 +62,17 @@ public static class GeneralMovementSystem
         }
 
         // 3. Vitesse : on se rapproche en douceur de la vitesse voulue (accélération / freinage).
-        float maxSpeed = T.BaseSpeed * (g.Sprinting ? T.SprintMultiplier : 1f) * terrain.SpeedFactor(g.Position.X, g.Position.Y) * arrive;
+        // La vitesse dépend aussi du chef de l'ère (un chevalier à cheval va plus vite qu'un centurion).
+        float maxSpeed = T.BaseSpeed * g.SpeedMultiplier * (g.Sprinting ? T.SprintMultiplier : 1f) * (retreating ? 0.85f : 1f)
+                         * terrain.SpeedFactor(g.Position.X, g.Position.Y) * arrive;
         float k = MathF.Min(1, (moving ? T.AccelerationMoving : T.AccelerationStopping) * dt);
         g.Velocity += (direction * maxSpeed - g.Velocity) * k;
 
         // 4. Déplacement avec glissement : si on ne peut pas avancer en diagonale, on essaie chaque axe.
         var next = g.Position + g.Velocity * dt;
-        if (terrain.IsWalkable(next, General.Radius)) g.Position = next;
-        else if (terrain.IsWalkable(next.X, g.Position.Y, General.Radius)) { g.Position = new Vec2(next.X, g.Position.Y); g.Velocity = new Vec2(g.Velocity.X, g.Velocity.Y * 0.5f); }
-        else if (terrain.IsWalkable(g.Position.X, next.Y, General.Radius)) { g.Position = new Vec2(g.Position.X, next.Y); g.Velocity = new Vec2(g.Velocity.X * 0.5f, g.Velocity.Y); }
+        if (terrain.IsWalkable(next, g.Radius)) g.Position = next;
+        else if (terrain.IsWalkable(next.X, g.Position.Y, g.Radius)) { g.Position = new Vec2(next.X, g.Position.Y); g.Velocity = new Vec2(g.Velocity.X, g.Velocity.Y * 0.5f); }
+        else if (terrain.IsWalkable(g.Position.X, next.Y, g.Radius)) { g.Position = new Vec2(g.Position.X, next.Y); g.Velocity = new Vec2(g.Velocity.X * 0.5f, g.Velocity.Y); }
         else g.Velocity *= 0.2f;
 
         // 5. Bloqué sur un chemin ? On le recalcule.
@@ -85,12 +93,9 @@ public static class GeneralMovementSystem
 
         // 6. Rotation du chef (et, plus lentement, de sa formation) vers la direction du mouvement.
         float speed = g.Velocity.Length;
-        if (speed > 15)
-        {
-            g.Angle = MathUtil.TurnTowards(g.Angle, g.Velocity.Angle, T.TurnRate * dt);
-            g.WalkCycle += speed * dt * 0.075f;
-        }
-        if (speed > 40) army.FormationAngle = MathUtil.TurnTowards(army.FormationAngle, g.Angle, T.FormationTurnRate * dt);
+        if (speed > 15 && !retreating) g.Angle = MathUtil.TurnTowards(g.Angle, g.Velocity.Angle, T.TurnRate * dt);
+        if (speed > 15) g.WalkCycle += speed * dt * 0.075f;
+        if (speed > 40 && !retreating) army.FormationAngle = MathUtil.TurnTowards(army.FormationAngle, g.Angle, T.FormationTurnRate * dt);
     }
 
     /// <summary>

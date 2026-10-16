@@ -13,8 +13,10 @@ namespace ChronoClash.Game.Input;
 ///
 /// Déplacement : ZQSD en AZERTY / WASD en QWERTY (touches « physiques » : même position sur tous les claviers)
 /// ou flèches · Clic droit = aller à un point (maintenu = suivre la souris) · Maj + clic droit = ajouter une étape ·
-/// Espace maintenu = sprint · X = halte · 4/5/6 = acheter guerrier/distance/tank · Tab = formation suivante ·
-/// 7/8/9/0 = choisir une formation · F = éditeur de formation · F4 = +20 troupes (test).
+/// Espace maintenu = sprint · X = halte · 1 charge · 2 retrait · 3 viser (le curseur) · R cri de guerre ·
+/// 4/5/6 = acheter guerrier/distance/tank · Tab = formation suivante · 7/8/9/0 = choisir une formation ·
+/// F = éditeur de formation.
+/// Tests : F4 = +20 troupes · F6 = clan ennemi immobile (Maj + F6 : 2 ères d'avance) · F7 = +50 ★.
 /// À l'étape M6, ces touches deviendront personnalisables (écran Réglages).
 /// </summary>
 public partial class InputMapper : Node
@@ -134,6 +136,9 @@ public partial class InputMapper : Node
         if (key.Echo) return;
         switch (key.PhysicalKeycode)
         {
+            case Key.Key1: Tactic(TacticKind.Charge); return;
+            case Key.Key2: Tactic(TacticKind.Retreat); return;
+            case Key.Key3: Tactic(TacticKind.Aim); return;
             case Key.Key7: SelectFormation(0); return;
             case Key.Key8: SelectFormation(1); return;
             case Key.Key9: SelectFormation(2); return;
@@ -143,6 +148,18 @@ public partial class InputMapper : Node
         switch (key.Keycode)
         {
             case Key.X: _session.Send(new StopCommand(Tick, Player)); break;
+            case Key.R: Tactic(TacticKind.WarCry); break;
+            case Key.F6:
+            {
+                int count = _session.World.Data.Tuning.Debug.EnemyTroopsCount;
+                _session.Send(new DebugSpawnEnemyCommand(Tick, Player, count, key.ShiftPressed ? 2 : 0));
+                _hud.ShowChip(key.ShiftPressed ? "Test : clan ennemi avec 2 ères d'avance" : "Test : clan ennemi devant toi");
+                break;
+            }
+            case Key.F7:
+                _session.Send(new DebugAddPointsCommand(Tick, Player, _session.World.Data.Tuning.Debug.AddPoints));
+                _hud.ShowChip($"Test : +{_session.World.Data.Tuning.Debug.AddPoints} ★");
+                break;
             case Key.F: _editor.Open(); break;
             case Key.F4:
                 _session.Send(new DebugSpawnTroopsCommand(Tick, Player, _session.World.Data.Tuning.Debug.SpawnTroopsCount));
@@ -152,6 +169,13 @@ public partial class InputMapper : Node
     }
 
     private void Buy(TroopKind kind) => _session.Send(new BuyCommand(Tick, Player, kind));
+
+    /// <summary>Lance une tactique. « Viser » prend le point du monde sous le curseur.</summary>
+    private void Tactic(TacticKind kind)
+    {
+        var aim = _camera.GetGlobalMousePosition();
+        _session.Send(new TacticCommand(Tick, Player, kind, aim.X, aim.Y));
+    }
 
     private void SelectFormation(int index)
     {

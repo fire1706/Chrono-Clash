@@ -57,10 +57,19 @@ public static class CommandSystem
                     army.Formations[set.Index].Cells[FormationTemplate.ChiefRow * FormationTemplate.Columns + FormationTemplate.ChiefColumn] = 0; // la case du chef reste vide
                     if (set.Index == army.FormationIndex) army.SlotsDirty = true;
                     break;
+                case TacticCommand tactic when Enum.IsDefined(tactic.Kind):
+                    TacticSystem.Use(world, army, tactic.Kind, new Vec2(tactic.AimX, tactic.AimY), events);
+                    break;
+                // ---- Commandes de test (refusées si la partie n'autorise pas les triches) ----
                 case DebugSpawnTroopsCommand debug when world.Settings.AllowCheats:
                     Recruitment.SpawnTestTroops(world, army, Math.Clamp(debug.Count, 1, 100));
                     break;
-                // Les tactiques (charge, retrait, visée, cri de guerre) arrivent à l'étape M3.
+                case DebugSpawnEnemyCommand enemy when world.Settings.AllowCheats:
+                    Recruitment.SpawnTestEnemy(world, army, Math.Clamp(enemy.Count, 1, 150), Math.Clamp(army.Era + enemy.EraOffset, 0, Entities.Army.MaxEra));
+                    break;
+                case DebugAddPointsCommand add when world.Settings.AllowCheats:
+                    army.Points += Math.Clamp(add.Amount, 0, 5000);
+                    break;
             }
         }
     }

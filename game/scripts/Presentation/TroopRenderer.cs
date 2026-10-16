@@ -43,16 +43,47 @@ public partial class TroopRenderer : Node2D
                 if (!view.HasPoint(pos)) continue;
                 if (simple) { DrawSimple(u, pos, team); continue; }
                 DrawDetailed(u, pos, team);
+                DrawOverlays(u, pos, zoom);
             }
         }
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+    }
+
+    /// <summary>
+    /// Par-dessus la troupe (sans rotation) : lueur du cri de guerre, éclair blanc quand elle est touchée,
+    /// lueur d'évolution, barre de vie si elle est blessée, chevrons de vétéran.
+    /// </summary>
+    private void DrawOverlays(Unit u, Vector2 pos, float zoom)
+    {
+        DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+        float r = u.Radius;
+        if (u.WarCryTime > 0) DrawArc(pos, r + 4, 0, Mathf.Tau, 16, new Color(1, 0.55f, 0.15f, 0.7f), 2);
+        if (u.HitFlash > 0) DrawCircle(pos, r + 1, new Color(1, 1, 1, u.HitFlash / 0.12f * 0.6f));
+        if (u.EvolveFlash > 0) DrawArc(pos, r + 10 * (1 - u.EvolveFlash / 0.8f) + 3, 0, Mathf.Tau, 20, new Color(1, 0.95f, 0.69f, u.EvolveFlash / 0.8f), 3);
+        if (u.Hp < u.MaxHp)
+        {
+            float w = r * 2.4f, y = pos.Y - r - 7;
+            DrawRect(new Rect2(pos.X - w / 2, y, w, 3), new Color(0, 0, 0, 0.55f));
+            float q = u.Hp / u.MaxHp;
+            DrawRect(new Rect2(pos.X - w / 2, y, w * q, 3), q > 0.5f ? new Color(0.38f, 0.76f, 0.48f) : q > 0.25f ? new Color(0.91f, 0.73f, 0.23f) : new Color(0.85f, 0.3f, 0.2f));
+        }
+        if (u.Veteran > 0)
+        {
+            // Chevrons dorés au-dessus de la troupe (un par niveau).
+            float y = pos.Y - r - (u.Hp < u.MaxHp ? 12 : 8);
+            for (int i = 0; i < u.Veteran; i++)
+            {
+                float cy = y - i * 3;
+                DrawPolyline(new[] { new Vector2(pos.X - 4, cy), new Vector2(pos.X, cy - 2.5f), new Vector2(pos.X + 4, cy) }, new Color(0.95f, 0.79f, 0.3f), 1.6f);
+            }
+        }
     }
 
     private void DrawSimple(Unit u, Vector2 pos, Color team)
     {
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);
         float r = u.Kind == Core.Commands.TroopKind.Tank ? 11 : 5;
-        DrawCircle(pos, r, team);
+        DrawCircle(pos, r, u.HitFlash > 0 ? Colors.White : team);
         DrawCircle(pos, r * 0.45f, Color.FromHtml(_session.World.Data.Troop(u.Kind).Color));
     }
 

@@ -9,7 +9,45 @@
     "nearSpawnRadius": 520,
     "pointsPerTroopBubble": 1      // ★ gagnés en ramassant une bulle de troupe
   },
+
+  "combat": {
+    "damageMultiplier": 0.45,      // tous les dégâts sont multipliés par ce nombre (plus petit = combats plus longs)
+    "victimEraPointBonus": 0.25,   // une victime vaut +25 % de ★ par ère qu'elle a atteinte
+    "chiefPoints": 15,             // ★ pour avoir tué un chef
+    "promotedChiefPoints": 5,      // ★ pour un chef promu (un soldat qui a repris le commandement)
+    "eliminationPoints": 40,       // ★ bonus pour avoir éliminé un clan entier
+    "killResources": { "Warrior": 2, "Ranged": 3, "Tank": 6 },  // ◆ gagnées par troupe tuée
+    "chiefResources": 10,
+    "promotedChiefResources": 3,
+    "eliminationResources": 30,
+    "chiefRegenPerSecond": 3,      // vie regagnée par le chef hors combat
+    "chiefRegenDelay": 5,          // secondes sans dégâts avant que le chef se soigne
+    "hillRangeMultiplier": 1.25,   // portée des tireurs sur une colline
+    "chargeDamageWarrior": 2.5,    // multiplicateur de dégâts au contact pendant une charge
+    "chargeDamageTank": 3,
+    "projectileSpeeds": { "stone": 430, "arrow": 560, "rock": 300, "ball": 900, "bullet": 1500, "rocket": 520, "shell": 1000, "plasma": 720 }
+  },
+
+  // Les 4 tactiques : cooldown = secondes avant de pouvoir recommencer, duration = durée de l'effet.
+  "tactics": {
+    "charge":  { "cooldown": 12, "duration": 2.6, "share": 0.4, "speed": 1.85 }, // share = part des guerriers et tanks qui chargent
+    "retreat": { "cooldown": 14, "duration": 3 },
+    "aim":     { "cooldown": 12, "duration": 5 },
+    "warCry":  { "cooldown": 25, "duration": 6, "radius": 340, "damage": 1.3, "speed": 1.15 }
+  },
+
+  "evolution": {
+    "duration": 20                 // secondes pour que toute l'armée passe à l'ère suivante
+  },
+
+  "veterans": {
+    "fightsForLevel": [2, 4, 7],   // combats survécus pour gagner 1, 2 puis 3 chevrons
+    "bonusPerLevel": 0.1           // +10 % de dégâts et de vie par chevron
+  },
+
   "debug": {
-    "spawnTroopsCount": 20         // troupes ajoutées par la touche F4 (seulement si les triches sont autorisées)
+    "spawnTroopsCount": 20,        // F4 : troupes ajoutées (seulement si les triches sont autorisées)
+    "enemyTroopsCount": 25,        // F6 : taille du clan ennemi de test
+    "addPoints": 50                // F7 : ★ ajoutés pour tester les ères
   }
 }

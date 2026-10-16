@@ -21,6 +21,7 @@ public partial class ArmyRenderer : Node2D
 
     private GameSession _session = null!;
     private Camera2D _camera = null!;
+    private readonly UnitVisualRegistry _visuals = new();
     /// <summary>Repères de clic droit : position et âge en secondes.</summary>
     private readonly List<(Vector2 Position, float Age)> _markers = new();
     private float _time;
@@ -122,6 +123,37 @@ public partial class ArmyRenderer : Node2D
         DrawSetTransform(pos, g.Angle, Vector2.One);
         bool moving = g.Velocity.Length > 15;
         float stride = moving ? Mathf.Sin(g.WalkCycle) : 0;
+        var (image, teamMask) = g.Promoted ? _visuals.Get(g.HeirKind, g.Era) : _visuals.GetChief(g.Era);
+        if (image != null)
+        {
+            // Image du graphiste (art/chiefs/chief_<ère>.png, ou celle du soldat pour un chef promu).
+            var size = image.GetSize();
+            float target = g.Promoted ? UnitVisualRegistry.WorldSizeOf(g.HeirKind) * 1.2f : UnitVisualRegistry.ChiefWorldSize(g.Era);
+            float scale = target / Mathf.Max(size.X, size.Y);
+            var rect = new Rect2(-size * scale / 2, size * scale);
+            DrawTextureRect(image, rect, false);
+            if (teamMask != null) DrawTextureRect(teamMask, rect, false, team);
+        }
+        else if (g.Promoted)
+        {
+            // Un soldat promu garde son apparence, un peu plus grand.
+            DrawSetTransform(pos, g.Angle, new Vector2(1.25f, 1.25f));
+            UnitDrawings.Draw(this, g.HeirKind, g.Era, team, g.WalkCycle, moving);
+        }
+        else if (g.Era == 0) DrawClanChief(team, stride);
+        else ChiefDrawings.Draw(this, g.Era, team, stride);
+
+        // Effets par-dessus (sans rotation) : éclair quand il est touché, lueur d'évolution, étoile de grade.
+        DrawSetTransform(pos, 0, Vector2.One);
+        if (g.HitFlash > 0) DrawCircle(Vector2.Zero, 15, new Color(1, 1, 1, g.HitFlash / 0.12f * 0.55f));
+        if (g.EvolveFlash > 0) DrawArc(Vector2.Zero, 18 + 16 * (1 - g.EvolveFlash / 0.8f), 0, Mathf.Tau, 28, new Color(1, 0.95f, 0.69f, g.EvolveFlash / 0.8f), 3);
+        if (g.Promoted) DrawPromotionStar(new Vector2(0, -22));
+        DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+    }
+
+    /// <summary>Le chef de clan préhistorique (dessin du prototype), dans le repère déjà tourné.</summary>
+    private void DrawClanChief(Color team, float stride)
+    {
         // Jambes
         DrawCircle(new Vector2(stride * 6, -5.5f), 3.4f, DarkLeather);
         DrawCircle(new Vector2(-stride * 6, 5.5f), 3.4f, DarkLeather);
@@ -154,14 +186,21 @@ public partial class ArmyRenderer : Node2D
             DrawPolyline(new[] { new Vector2(1, side * 5.5f), new Vector2(3.5f, side * 10), new Vector2(7, side * 12), new Vector2(10, side * 12.5f) }, Bone, 2.6f);
         DrawCircle(new Vector2(7.4f, 0), 1.6f, Bone);
 
-        DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+    }
+
+    /// <summary>Petite étoile dorée : ce chef est un soldat qui a repris le commandement.</summary>
+    private void DrawPromotionStar(Vector2 c)
+    {
+        var pts = new Vector2[10];
+        for (int i = 0; i < 10; i++) pts[i] = c + Vector2.FromAngle(-Mathf.Pi / 2 + i * Mathf.Pi / 5) * (i % 2 == 0 ? 6 : 2.6f);
+        DrawColoredPolygon(pts, new Color(0.95f, 0.79f, 0.3f));
     }
 
     /// <summary>Étiquette au-dessus du chef, toujours à la même taille à l'écran quel que soit le zoom.</summary>
     private void DrawNameTag(Army army, Vector2 pos, bool isLocal, float zoom)
     {
         var font = ThemeDB.FallbackFont;
-        string label = isLocal ? "Toi" : army.Name;
+        string label = (isLocal ? "Toi" : army.Name) + (army.Evolution != null ? " · évolution" : "");
         const int fontSize = 13;
         float width = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize).X + 14;
         // On se place au-dessus du chef puis on annule le zoom pour dessiner « en pixels d'écran ».

@@ -37,14 +37,18 @@ public partial class GameRoot : Node2D
         // ---- Monde (du plus bas au plus haut à l'écran) ----
         var map = new MapRenderer { Name = "Map", ZIndex = -10 };
         var bubbles = new BubbleRenderer { Name = "Bubbles", ZIndex = 0 };
+        var corpses = new CorpseLayer { Name = "Corpses", ZIndex = 2 };
         var troops = new TroopRenderer { Name = "Troops", ZIndex = 5 };
         var chiefs = new ArmyRenderer { Name = "Chiefs", ZIndex = 10 };
+        var projectiles = new ProjectileRenderer { Name = "Projectiles", ZIndex = 15 };
         var effects = new EffectsLayer { Name = "Effects", ZIndex = 20 };
         var camera = new CameraController { Name = "Camera" };
         var input = new InputMapper { Name = "Input" };
-        foreach (var node in new Node[] { map, bubbles, troops, chiefs, effects, camera, input }) AddChild(node);
+        foreach (var node in new Node[] { map, bubbles, corpses, troops, chiefs, projectiles, effects, camera, input }) AddChild(node);
         map.Setup(session, camera);
         bubbles.Setup(session, camera);
+        corpses.Setup(session);
+        projectiles.Setup(session, camera);
         troops.Setup(session, camera);
         chiefs.Setup(session, camera);
         effects.Setup(session, camera);

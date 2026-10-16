@@ -47,7 +47,8 @@ public partial class DebugHud : Control
             $"Chef : ({g.Position.X:0}, {g.Position.Y:0})   vitesse {g.Velocity.Length:0}   endurance {g.Stamina:0} %{(g.Exhausted ? " (épuisé)" : g.Sprinting ? " (sprint)" : "")}\n" +
             $"Zoom {_camera.Zoom.X:0.00}   caméra {(_camera.Locked ? "verrouillée" : "libre")}   bulles {world.Bubbles.Count}   troupes {_session.LocalArmy.Units.Count}\n\n" +
             "ZQSD / flèches : marcher · clic droit : aller (maintenu = suivre) · Maj + clic droit : ajouter une étape · Espace : sprint · X : halte\n" +
-            "4 / 5 / 6 : acheter · Tab ou 7 8 9 0 : formation · F : éditeur de formation · F4 : +20 troupes (test)\n" +
+            "1 charge · 2 retrait · 3 viser (curseur) · R cri de guerre · 4 / 5 / 6 : acheter · Tab ou 7 8 9 0 : formation · F : éditeur\n" +
+            "Tests : F4 +20 troupes · F6 clan ennemi (Maj + F6 : 2 ères d'avance) · F7 +50 ★\n" +
             "Molette : zoom · Y : verrouiller · C : recentrer · clic molette : glisser · F2 : nouvelle carte · F3 : cacher ce panneau";
 
     }

@@ -16,6 +16,8 @@ public static class Recruitment
         var stats = world.Data.Stats(kind, army.Era);
         var unit = new Unit(world.NextEntityId(), army, kind, army.Era, position, def.Radius, stats.Hp) { Angle = army.FormationAngle };
         army.Units.Add(unit);
+        // Arrivée pendant une évolution : elle évoluera elle aussi avant la fin.
+        army.Evolution?.Add(unit);
         army.PeakUnits = Math.Max(army.PeakUnits, army.Units.Count);
         army.SlotsDirty = true;
         return unit;
@@ -37,6 +39,29 @@ public static class Recruitment
         if (!world.Terrain.IsWalkable(position, world.Data.Troop(kind).Radius)) position = g.Position;
         AddUnit(world, army, kind, position);
         events.Add(new TroopRecruitedEvent(world.Tick, army.Id, kind));
+    }
+
+    /// <summary>
+    /// Test seulement : un clan ennemi immobile (pas encore de bots) apparaît à 650 px devant le chef,
+    /// à l'ère demandée, pour essayer le combat, les tactiques et le multiplicateur d'outsider.
+    /// </summary>
+    public static void SpawnTestEnemy(World world, Army near, int count, int era)
+    {
+        var g = near.General;
+        Vec2 position = g.Position;
+        for (int k = 0; k < 40; k++)
+        {
+            float a = g.Angle + ((float)world.Random.NextDouble() - 0.5f) * 1.2f, d = 560 + (float)world.Random.NextDouble() * 180;
+            var p = g.Position + Vec2.FromAngle(a) * d;
+            if (world.Terrain.IsWalkable(p, 40)) { position = p; break; }
+        }
+        int number = world.Armies.Count(a => a.Name.StartsWith("Clan d'entraînement")) + 1;
+        var enemy = world.CreateArmy(-1000 - world.Armies.Count, $"Clan d'entraînement {number}", 0x9A9A9A, isBot: true, position);
+        enemy.Era = era;
+        enemy.General.ApplyEraStats(world.Data, era);
+        enemy.General.Hp = enemy.General.MaxHp;
+        enemy.General.Angle = enemy.FormationAngle = (g.Position - position).Angle; // il fait face au joueur
+        SpawnTestTroops(world, enemy, count);
     }
 
     /// <summary>Test seulement : ajoute plusieurs troupes au hasard autour du chef.</summary>

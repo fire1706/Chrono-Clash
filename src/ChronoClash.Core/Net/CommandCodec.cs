@@ -13,7 +13,7 @@ public static class CommandCodec
 {
     private enum Kind : byte
     {
-        MoveTo = 1, Direction = 2, Stop = 3, Sprint = 4, Tactic = 5, Buy = 6, SelectFormation = 7, SetFormationCells = 8, DebugSpawnTroops = 9,
+        MoveTo = 1, Direction = 2, Stop = 3, Sprint = 4, Tactic = 5, Buy = 6, SelectFormation = 7, SetFormationCells = 8, DebugSpawnTroops = 9, DebugSpawnEnemy = 10, DebugAddPoints = 11,
     }
 
     public static byte[] Encode(PlayerCommand command)
@@ -32,6 +32,8 @@ public static class CommandCodec
             case SelectFormationCommand c: Header(w, Kind.SelectFormation, c); w.Write((byte)c.Index); break;
             case SetFormationCellsCommand c: Header(w, Kind.SetFormationCells, c); w.Write((byte)c.Index); w.Write((ushort)c.Cells.Length); w.Write(c.Cells); break;
             case DebugSpawnTroopsCommand c: Header(w, Kind.DebugSpawnTroops, c); w.Write((ushort)c.Count); break;
+            case DebugSpawnEnemyCommand c: Header(w, Kind.DebugSpawnEnemy, c); w.Write((ushort)c.Count); w.Write((sbyte)c.EraOffset); break;
+            case DebugAddPointsCommand c: Header(w, Kind.DebugAddPoints, c); w.Write(c.Amount); break;
             default: throw new ArgumentException($"Ordre inconnu : {command.GetType().Name}");
         }
         w.Flush();
@@ -66,6 +68,8 @@ public static class CommandCodec
                 Kind.SelectFormation => new SelectFormationCommand(tick, player, r.ReadByte()),
                 Kind.SetFormationCells => DecodeCells(r, tick, player),
                 Kind.DebugSpawnTroops => new DebugSpawnTroopsCommand(tick, player, r.ReadUInt16()),
+                Kind.DebugSpawnEnemy => new DebugSpawnEnemyCommand(tick, player, r.ReadUInt16(), r.ReadSByte()),
+                Kind.DebugAddPoints => new DebugAddPointsCommand(tick, player, r.ReadInt32()),
                 _ => null,
             };
         }
