@@ -119,6 +119,14 @@ public partial class GameSession : Node
     /// <summary>L'hôte change les réglages du salon (envoyés aux joueurs connectés).</summary>
     public void HostSetSettings(MatchSettings settings) => _host?.SetLobbySettings(settings);
 
+    /// <summary>
+    /// Vrai si ce joueur peut lancer la partie : l'hôte, ou le chef de salon d'un serveur dédié.
+    /// </summary>
+    public bool CanStartMatch => Mode == SessionMode.Host || (Mode == SessionMode.Client && _remote!.IsLeader);
+
+    /// <summary>Chef de salon d'un serveur dédié : demande au serveur de lancer la partie avec ces réglages.</summary>
+    public void RequestDedicatedStart(MatchSettings settings) => _remote?.RequestMatch(settings, start: true);
+
     /// <summary>L'hôte lance la partie avec les joueurs du salon (+ des bots pour compléter).</summary>
     public void HostStart(MatchSettings settings)
     {

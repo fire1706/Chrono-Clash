@@ -21,4 +21,6 @@ public enum MessageType : byte
     Events = 8,
     /// <summary>Hôte → tous : bulles apparues et disparues, voir BubbleSync.</summary>
     Bubbles = 9,
+    /// <summary>Client « chef de salon » → serveur dédié : réglages de la partie, et « lancer » (JSON).</summary>
+    HostRequest = 10,
 }

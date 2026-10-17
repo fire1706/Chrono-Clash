@@ -18,7 +18,10 @@ namespace ChronoClash.Core.Systems;
 /// </summary>
 public static class UnitMovementSystem
 {
-    private static readonly List<IBody> Neighbors = new();
+    // Liste de travail réutilisée (une par fil d'exécution : plusieurs parties peuvent tourner en parallèle,
+    // par exemple les simulations d'équilibrage ou plusieurs parties sur un serveur).
+    [ThreadStatic] private static List<IBody>? _neighbors;
+    private static List<IBody> Neighbors => _neighbors ??= new();
 
     public static void Update(World world, float dt, List<GameEvent> events)
     {

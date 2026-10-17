@@ -14,7 +14,10 @@ namespace ChronoClash.Core.Systems;
 /// </summary>
 public static class EventSystem
 {
-    private static readonly List<IBody> Nearby = new();
+    // Liste de travail réutilisée (une par fil d'exécution : plusieurs parties peuvent tourner en parallèle,
+    // par exemple les simulations d'équilibrage ou plusieurs parties sur un serveur).
+    [ThreadStatic] private static List<IBody>? _nearby;
+    private static List<IBody> Nearby => _nearby ??= new();
 
     public static void Init(World world) => world.EventTimer = world.Data.Tuning.Events.FirstAfter * world.TimeFactor;
 

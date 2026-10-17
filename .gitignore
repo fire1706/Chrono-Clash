@@ -15,3 +15,6 @@ TestResults/
 # OS
 .DS_Store
 Thumbs.db
+
+# Exports du jeu
+build/

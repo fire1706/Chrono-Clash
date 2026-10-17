@@ -21,6 +21,9 @@ public partial class Minimap : Control
     private ArmyRenderer _renderer = null!;
     private ImageTexture _texture = null!;
     private bool _dragging;
+    private Color[] _bubbleColors = Array.Empty<Color>();
+    /// <summary>La minicarte se redessine 10 fois par seconde (assez pour suivre, bien moins coûteux).</summary>
+    private float _redrawTimer;
 
     public void Setup(GameSession session, CameraController camera, ArmyRenderer renderer)
     {
@@ -30,6 +33,8 @@ public partial class Minimap : Control
         Size = new Vector2(DisplaySize, DisplaySize);
         MouseFilter = MouseFilterEnum.Stop;
         _texture = BuildTexture(session.World.Terrain);
+        var data = session.World.Data;
+        _bubbleColors = data.Troops.OrderBy(t => (int)t.Kind).Select(t => Color.FromHtml(t.Color)).Append(Color.FromHtml(data.Star.Color)).ToArray();
     }
 
     /// <summary>Peint une fois pour toutes une version réduite du terrain.</summary>
@@ -66,6 +71,9 @@ public partial class Minimap : Control
     {
         var viewport = GetViewportRect().Size;
         Position = new Vector2(12, viewport.Y - Size.Y - 12);
+        _redrawTimer -= (float)delta;
+        if (_redrawTimer > 0) return;
+        _redrawTimer = 0.1f;
         QueueRedraw();
     }
 
@@ -110,7 +118,7 @@ public partial class Minimap : Control
         var data = _session.World.Data;
         foreach (var b in _session.World.Bubbles)
         {
-            var color = b.Kind == Core.Entities.BubbleKind.Star ? Color.FromHtml(data.Star.Color) : Color.FromHtml(data.Troop((Core.Commands.TroopKind)(int)b.Kind).Color);
+            var color = _bubbleColors[(int)b.Kind];
             float size = b.Kind is Core.Entities.BubbleKind.Star or Core.Entities.BubbleKind.Tank ? 2.2f : 1.3f;
             DrawRect(new Rect2(ToMap(b.Position.ToGodot()) - new Vector2(size / 2, size / 2), new Vector2(size, size)), color);
         }

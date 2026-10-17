@@ -52,6 +52,13 @@ public sealed class RemoteClient
         _transport.Send(ClientSession.HostPeerId, JsonMessage.Encode(MessageType.Hello, new HelloMessage { Protocol = CoreInfo.ProtocolVersion, Name = _name, Color = _color, Emblem = _emblem }), reliable: true);
     }
 
+    /// <summary>Vrai si ce joueur mène le salon d'un serveur dédié (il choisit les réglages et lance la partie).</summary>
+    public bool IsLeader => PlayerId > 0 && Lobby.Any(p => p.PlayerId == PlayerId && p.IsHost);
+
+    /// <summary>Chef de salon d'un serveur dédié : envoie les réglages, et lance la partie si <paramref name="start"/>.</summary>
+    public void RequestMatch(MatchSettings settings, bool start)
+        => _transport.Send(ClientSession.HostPeerId, JsonMessage.Encode(MessageType.HostRequest, new HostRequestMessage { Settings = settings, Start = start }), reliable: true);
+
     /// <summary>Envoie un ordre à l'hôte (en mode fiable : un ordre ne doit pas se perdre).</summary>
     public void Send(PlayerCommand command) => _transport.Send(ClientSession.HostPeerId, CommandCodec.Encode(command), reliable: true);
 

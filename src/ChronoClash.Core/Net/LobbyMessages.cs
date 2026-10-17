@@ -51,6 +51,13 @@ public sealed class RosterEntry
     public string? Personality { get; set; }
 }
 
+/// <summary>Demande du chef de salon d'un serveur dédié : nouveaux réglages, et lancer la partie ou non.</summary>
+public sealed class HostRequestMessage
+{
+    public MatchSettings Settings { get; set; } = new();
+    public bool Start { get; set; }
+}
+
 public sealed class StartMessage
 {
     public MatchSettings Settings { get; set; } = new();

@@ -15,10 +15,15 @@ public partial class BubbleRenderer : Node2D
     private float _time;
     private static readonly Color StarColor = Color.FromHtml("#f2c94c");
 
+    /// <summary>Couleurs des bulles (guerrier, distance, tank, étoile), lues une fois au démarrage.</summary>
+    private Color[] BubbleColors = Array.Empty<Color>();
+
     public void Setup(GameSession session, Camera2D camera)
     {
         _session = session;
         _camera = camera;
+        var data = session.World.Data;
+        BubbleColors = data.Troops.OrderBy(t => (int)t.Kind).Select(t => Color.FromHtml(t.Color)).Append(StarColor).ToArray();
     }
 
     public override void _Process(double delta)
@@ -40,7 +45,7 @@ public partial class BubbleRenderer : Node2D
             float pop = Mathf.Min(1, b.Age * 3);             // apparition progressive
             float bob = Mathf.Sin(_time * 2.2f + b.Phase) * 2.5f; // flottement
             float r = b.Radius * pop;
-            var color = b.Kind == BubbleKind.Star ? StarColor : Color.FromHtml(data.Troop((Core.Commands.TroopKind)(int)b.Kind).Color);
+            var color = BubbleColors[(int)b.Kind];
 
             DrawSetTransform(Vector2.Zero, 0, Vector2.One);
             UnitDrawings.FillEllipse(this, p + new Vector2(2, r * 0.9f), r * 0.85f, r * 0.35f, UnitDrawings.Shadow); // ombre

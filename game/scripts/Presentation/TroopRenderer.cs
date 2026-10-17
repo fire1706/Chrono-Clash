@@ -18,10 +18,14 @@ public partial class TroopRenderer : Node2D
     private Camera2D _camera = null!;
     private readonly UnitVisualRegistry _visuals = new();
 
+    /// <summary>Couleur de chaque type de troupe, lue une fois (lire « #d9532f » à chaque image coûte cher).</summary>
+    private Color[] KindColors = Array.Empty<Color>();
+
     public void Setup(GameSession session, Camera2D camera)
     {
         _session = session;
         _camera = camera;
+        KindColors = session.World.Data.Troops.OrderBy(t => (int)t.Kind).Select(t => Color.FromHtml(t.Color)).ToArray();
     }
 
     public override void _Process(double delta) => QueueRedraw();
@@ -86,7 +90,7 @@ public partial class TroopRenderer : Node2D
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);
         float r = u.Kind == Core.Commands.TroopKind.Tank ? 11 : 5;
         DrawCircle(pos, r, u.HitFlash > 0 ? Colors.White : team);
-        DrawCircle(pos, r * 0.45f, Color.FromHtml(_session.World.Data.Troop(u.Kind).Color));
+        DrawCircle(pos, r * 0.45f, KindColors[(int)u.Kind]);
     }
 
     private void DrawDetailed(Unit u, Vector2 pos, Color team)

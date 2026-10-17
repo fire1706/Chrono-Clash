@@ -217,7 +217,8 @@ public partial class TitleScreen : Control
     private void StartHostedMatch()
     {
         SaveProfile();
-        _session.HostStart(ReadSettings(cheats: false));
+        if (_session.Mode == SessionMode.Client) _session.RequestDedicatedStart(ReadSettings(cheats: false)); // serveur dédié
+        else _session.HostStart(ReadSettings(cheats: false));
     }
 
     private void PushSettings()
@@ -234,7 +235,7 @@ public partial class TitleScreen : Control
     private void RefreshLobby()
     {
         bool host = _session.Mode == SessionMode.Host;
-        _start.Visible = host;
+        _start.Visible = _session.CanStartMatch;
         var players = _session.LobbyPlayers;
         _players.Text = players.Count == 0
             ? Loc.T("Connexion à l'hôte…")
@@ -249,7 +250,8 @@ public partial class TitleScreen : Control
         else
         {
             var s = _session.LobbySettings;
-            _lobbyInfo.Text = (_session.Accepted && players.Count > 0 ? Loc.T("Connecté ! En attente que l'hôte lance la partie…") : Loc.F("Connexion à {0}:{1}…", _profile.LastAddress, _profile.Port))
+            _lobbyInfo.Text = (_session.CanStartMatch ? Loc.T("Tu mènes le salon de ce serveur : lance la partie quand tout le monde est là (réglages de l'écran précédent).")
+                : _session.Accepted && players.Count > 0 ? Loc.T("Connecté ! En attente que l'hôte lance la partie…") : Loc.F("Connexion à {0}:{1}…", _profile.LastAddress, _profile.Port))
                 + "\n" + Loc.F("Partie : {0} · {1} · {2}", UiKit.ModeName(s.Mode), UiKit.DifficultyName(s.Difficulty), UiKit.ThemeName(s.Theme));
         }
     }

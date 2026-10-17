@@ -36,6 +36,12 @@ public partial class GameRoot : Node2D
 
     public override void _Ready()
     {
+        if (DedicatedServer.IsRequested())
+        {
+            // Lancé en serveur dédié (sans affichage) : pas de menus, pas de rendu.
+            AddChild(new DedicatedServer { Name = "DedicatedServer" });
+            return;
+        }
         _ = GameSettings.Current; // charge et applique les réglages (langue, touches, volumes)
         _profile = PlayerProfile.Load();
         _session = new GameSession { Name = "Session" };
@@ -158,7 +164,7 @@ public partial class GameRoot : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key || !_session.InMatch) return;
+        if (_session == null || @event is not InputEventKey { Pressed: true, Echo: false } key || !_session.InMatch) return;
         if (key.IsActionPressed("pause") && _pause != null && !(_editor?.IsOpen ?? false))
         {
             if (_pause.IsOpen) _pause.Close(); else _pause.Open();

@@ -47,14 +47,20 @@ Attention : l'édition standard de Godot (sans « mono » dans le nom) **ne sait
 - Pour tester seul sur un ordinateur : lancer le jeu deux fois (depuis Godot : *Debug → Run Multiple Instances → 2*), héberger dans l'un et rejoindre `127.0.0.1` dans l'autre.
 - Tout le monde doit avoir **exactement la même version** du jeu (le salon refuse sinon).
 
+## Serveur dédié et équilibrage
+
+Voir [docs/M7.md](docs/M7.md) : lancer le jeu sans affichage comme serveur (`--headless -- --server`), et simuler des dizaines de parties entre bots pour équilibrer (`dotnet run --project src/ChronoClash.Server -c Release -- simulate`).
+
 ## Lancer les tests et le serveur (optionnel)
 
 Dans un terminal, à la racine du dépôt :
 
 ```
 dotnet test tests/ChronoClash.Core.Tests
-dotnet run --project src/ChronoClash.Server
+dotnet run --project src/ChronoClash.Server -c Release -- simulate --matches 10 --mode quick
 ```
+
+Le test le plus long (une partie rapide complète entre bots) peut être ignoré avec `dotnet test --filter "Category!=Long"`.
 
 Les tests tournent aussi automatiquement sur GitHub à chaque envoi (onglet **Actions**).
 

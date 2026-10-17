@@ -17,7 +17,10 @@ namespace ChronoClash.Core.Systems;
 /// </summary>
 public static class ObjectiveSystem
 {
-    private static readonly List<IBody> Nearby = new();
+    // Liste de travail réutilisée (une par fil d'exécution : plusieurs parties peuvent tourner en parallèle,
+    // par exemple les simulations d'équilibrage ou plusieurs parties sur un serveur).
+    [ThreadStatic] private static List<IBody>? _nearby;
+    private static List<IBody> Nearby => _nearby ??= new();
 
     /// <summary>Place les sanctuaires et les premiers portails (un près de chaque point de départ). À appeler après l'ajout des clans.</summary>
     public static void Init(World world)

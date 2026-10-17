@@ -19,3 +19,5 @@ jobs:
         run: dotnet test tests/ChronoClash.Core.Tests/ChronoClash.Core.Tests.csproj --configuration Release
       - name: Compilation du serveur sans affichage
         run: dotnet build src/ChronoClash.Server/ChronoClash.Server.csproj --configuration Release
+      - name: Simulation rapide (vérifie qu'une partie entre bots se déroule sans erreur)
+        run: dotnet run --project src/ChronoClash.Server -c Release -- simulate --matches 2 --mode quick --threads 2 --max-minutes 15

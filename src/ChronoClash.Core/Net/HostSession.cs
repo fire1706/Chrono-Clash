@@ -20,11 +20,11 @@ public sealed class HostSession
     /// <summary>Le joueur de l'hôte est toujours le joueur numéro 1.</summary>
     public const int HostPlayerId = 1;
 
-    private readonly ITransport _local;
+    private readonly ITransport? _local;
     private readonly ITransport? _network;
     private readonly Dictionary<int, int> _localPeers = new();   // connexion locale → joueur
     private readonly Dictionary<int, int> _networkPeers = new(); // connexion réseau → joueur
-    private readonly BubbleSync _bubbles = new();
+    private BubbleSync _bubbles = new();
     private float _snapshotTimer;
     private int _nextPlayerId = 2;
 
@@ -40,6 +40,27 @@ public sealed class HostSession
             _network.PeerDisconnected += OnPeerDisconnected;
         }
     }
+
+    /// <summary>
+    /// Serveur dédié : personne ne joue sur cette machine. Le premier joueur connecté devient le « chef de salon » :
+    /// c'est lui qui choisit les réglages et lance la partie (message HostRequest).
+    /// Quand tous les joueurs sont partis, le serveur revient au salon d'attente pour une nouvelle partie.
+    /// </summary>
+    public static HostSession Dedicated(ITransport network) => new(network);
+
+    private HostSession(ITransport network)
+    {
+        _network = network;
+        IsDedicated = true;
+        _nextPlayerId = 1;
+        _network.PeerDisconnected += OnPeerDisconnected;
+    }
+
+    /// <summary>Vrai pour un serveur dédié (aucun joueur local).</summary>
+    public bool IsDedicated { get; }
+
+    /// <summary>Messages pour la console du serveur (arrivées, départs, début et fin de partie).</summary>
+    public event Action<string>? Log;
 
     /// <summary>Hôte pour une partie déjà créée (tests, ou partie lancée sans salon).</summary>
     public HostSession(Match match, ITransport local) : this(local, null, "Hôte", 0xF0B52A)
@@ -98,7 +119,7 @@ public sealed class HostSession
     /// <summary>À appeler à chaque image : lit les messages, fait avancer la partie, envoie l'état aux joueurs.</summary>
     public void Update(double realSeconds)
     {
-        _local.Poll((peer, data) => OnMessage(peer, data, isNetwork: false));
+        _local?.Poll((peer, data) => OnMessage(peer, data, isNetwork: false));
         _network?.Poll((peer, data) => OnMessage(peer, data, isNetwork: true));
         if (Match == null) return;
 
@@ -134,6 +155,33 @@ public sealed class HostSession
             return;
         }
         if (isNetwork && type == MessageType.Hello) OnHello(peer, JsonMessage.Decode<HelloMessage>(data));
+        if (isNetwork && type == MessageType.HostRequest) OnHostRequest(peer, JsonMessage.Decode<HostRequestMessage>(data));
+    }
+
+    /// <summary>
+    /// Serveur dédié : le chef de salon change les réglages ou lance la partie.
+    /// Les demandes des autres joueurs sont ignorées ; les commandes de test restent interdites.
+    /// </summary>
+    private void OnHostRequest(int peer, HostRequestMessage? request)
+    {
+        if (!IsDedicated || request == null || Match != null || !_networkPeers.TryGetValue(peer, out int player)) return;
+        if (!Players.Any(p => p.PlayerId == player && p.IsHost)) return;
+        LobbySettings = request.Settings with { AllowCheats = false };
+        if (!request.Start) { BroadcastLobby(); return; }
+        StartMatch(LobbySettings with { Seed = (uint)Random.Shared.Next() });
+        Log?.Invoke($"Partie lancée : {Players.Count} joueur(s), mode {LobbySettings.Mode}");
+    }
+
+    /// <summary>Serveur dédié : retour au salon vide, prêt pour une nouvelle partie.</summary>
+    private void ResetToLobby()
+    {
+        Match = null;
+        Players.Clear();
+        _networkPeers.Clear();
+        _bubbles = new BubbleSync();
+        _nextPlayerId = 1;
+        Log?.Invoke("Retour au salon d'attente.");
+        LobbyChanged?.Invoke();
     }
 
     /// <summary>Un joueur demande à rejoindre : on vérifie la version et la place disponible.</summary>
@@ -151,8 +199,10 @@ public sealed class HostSession
         }
         int playerId = _nextPlayerId++;
         _networkPeers[peer] = playerId;
+        bool leader = IsDedicated && Players.Count == 0; // serveur dédié : le premier arrivé mène le salon
         string name = string.IsNullOrWhiteSpace(hello!.Name) ? $"Joueur {playerId}" : hello.Name.Trim()[..Math.Min(20, hello.Name.Trim().Length)];
-        Players.Add(new LobbyPlayer { PlayerId = playerId, Name = name, Color = hello.Color, Emblem = Math.Clamp(hello.Emblem, 0, 7) });
+        Players.Add(new LobbyPlayer { PlayerId = playerId, Name = name, Color = hello.Color, Emblem = Math.Clamp(hello.Emblem, 0, 7), IsHost = leader });
+        Log?.Invoke($"{name} a rejoint ({Players.Count} joueur(s)){(leader ? " — chef de salon" : "")}");
         _network!.Send(peer, JsonMessage.Encode(MessageType.Welcome, new WelcomeMessage { PlayerId = playerId }), reliable: true);
         BroadcastLobby();
     }
@@ -161,9 +211,12 @@ public sealed class HostSession
     private void OnPeerDisconnected(int peer)
     {
         if (!_networkPeers.Remove(peer, out int player)) return;
+        Log?.Invoke($"Joueur {player} parti");
         if (Match == null)
         {
+            bool wasLeader = Players.Any(p => p.PlayerId == player && p.IsHost);
             Players.RemoveAll(p => p.PlayerId == player);
+            if (IsDedicated && wasLeader && Players.Count > 0) Players[0].IsHost = true; // le suivant prend la main
             BroadcastLobby();
             return;
         }
@@ -174,6 +227,8 @@ public sealed class HostSession
             army.Brain = new BotBrain(bots.Personality(bots.PersonalityPool[(int)(Match.World.Random.NextDouble() * bots.PersonalityPool.Count)]), 0.5f);
             army.General.InputDirection = Mathematics.Vec2.Zero;
         }
+        // Serveur dédié : plus personne ? On repart pour une nouvelle partie.
+        if (IsDedicated && _networkPeers.Count == 0) ResetToLobby();
     }
 
     private void BroadcastLobby()
