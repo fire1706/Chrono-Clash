@@ -1,4 +1,10 @@
-; Fichier de configuration du projet Godot.
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -8,15 +14,15 @@ config/name="Chrono Clash"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
+[audio]
+
+general/text_to_speech=true
+
 [display]
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
 window/stretch/mode="canvas_items"
-
-[audio]
-
-general/text_to_speech=true
 
 [dotnet]
 
