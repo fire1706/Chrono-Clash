@@ -1,5 +1,11 @@
 # Guide du graphiste
 
+> **Point de départ :** les 24 troupes et les 8 chefs du prototype HTML sont déjà exportés en images dans
+> `game/assets/art/units/` et `game/assets/art/chiefs/` (outil : `tools/prototype-sprites`). Tu peux les ouvrir
+> comme modèles et les remplacer une par une, **à la même taille** : 96 × 96 px pour les guerriers et les troupes
+> à distance, 128 × 128 px pour les tanks et les chefs. Le corps est au centre, l'avant vers la droite, les zones du
+> clan en gris dans l'image et en blanc dans le calque `_team`.
+
 Le jeu dessine pour l'instant tout par le code, dans le style du prototype. Chaque image que tu ajoutes **remplace un dessin par défaut**, sans casser le reste. Tu peux donc avancer un visuel à la fois.
 
 ## Comment ça marche

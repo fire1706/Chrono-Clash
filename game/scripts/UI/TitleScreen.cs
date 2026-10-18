@@ -52,7 +52,12 @@ public partial class TitleScreen : Control
         var bg = new TextureRect { AnchorRight = 1, AnchorBottom = 1, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered };
         // Image de fond du graphiste si elle existe (game/assets/art/ui/title_background.png), sinon un fond uni.
         if (ResourceLoader.Exists("res://assets/art/ui/title_background.png")) bg.Texture = GD.Load<Texture2D>("res://assets/art/ui/title_background.png");
-        AddChild(new ColorRect { Color = new Color(0.09f, 0.08f, 0.06f), AnchorRight = 1, AnchorBottom = 1 });
+        // Fond du prototype : la carte floutée était derrière un dégradé radial sombre ; ici, un dégradé radial seul.
+        var gradient = new Gradient();
+        gradient.SetColor(0, new Color(0.16f, 0.2f, 0.17f));
+        gradient.SetColor(1, new Color(0.04f, 0.06f, 0.08f));
+        var radial = new GradientTexture2D { Gradient = gradient, Fill = GradientTexture2D.FillEnum.Radial, FillFrom = new Vector2(0.5f, 0.45f), FillTo = new Vector2(1.1f, 1.1f), Width = 512, Height = 512 };
+        AddChild(new TextureRect { Texture = radial, AnchorRight = 1, AnchorBottom = 1, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale });
         AddChild(bg);
 
         var center = new CenterContainer { AnchorRight = 1, AnchorBottom = 1 };
@@ -60,7 +65,10 @@ public partial class TitleScreen : Control
         var column = new VBoxContainer { CustomMinimumSize = new Vector2(620, 0) };
         column.AddThemeConstantOverride("separation", 10);
         center.AddChild(column);
-        column.AddChild(UiKit.Title("Chrono Clash", 64));
+        var titleLabel = UiKit.Title("Chrono Clash", 96);
+        titleLabel.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.5f));
+        titleLabel.AddThemeConstantOverride("shadow_offset_y", 4);
+        column.AddChild(titleLabel);
         var tagline = UiKit.Text(Loc.T("Dix clans. Huit ères. Un seul survivant."), 18, false);
         tagline.HorizontalAlignment = HorizontalAlignment.Center;
         column.AddChild(tagline);
@@ -70,9 +78,11 @@ public partial class TitleScreen : Control
         _home = new VBoxContainer();
         _home.AddThemeConstantOverride("separation", 10);
         column.AddChild(_home);
-        _home.AddChild(Centered(UiKit.Button("Jouer", () => Show(_setup), 320, 50)));
+        var play = UiKit.Button("Jouer", () => Show(_setup), 320, 54);
+        UiKit.MakePrimary(play);
+        _home.AddChild(Centered(play));
         var tutorial = UiKit.Button(_profile.TutorialDone ? "Tutoriel" : "Tutoriel (conseillé)", StartTutorial, 320, 50);
-        if (!_profile.TutorialDone) tutorial.AddThemeColorOverride("font_color", UiKit.Gold);
+        if (!_profile.TutorialDone) { tutorial.AddThemeColorOverride("font_color", UiKit.Gold); tutorial.AddThemeColorOverride("font_hover_color", UiKit.Gold); }
         _home.AddChild(Centered(tutorial));
         _home.AddChild(Centered(UiKit.Button("Défis et records", () => AddChild(new RecordsPanel(() => { })), 320, 50)));
         _home.AddChild(Centered(UiKit.Button("Réglages", () => AddChild(new SettingsPanel(Build)), 320, 50)));
@@ -102,7 +112,9 @@ public partial class TitleScreen : Control
         foreach (var o in new[] { _mode, _difficulty, _theme }) o.ItemSelected += _ => PushSettings();
         _fog.Toggled += _ => PushSettings();
 
-        _setup.AddChild(UiKit.Button("Jouer seul (contre 9 bots)", PlaySolo, 620, 46));
+        var solo = UiKit.Button("Jouer seul (contre 9 bots)", PlaySolo, 620, 50);
+        UiKit.MakePrimary(solo);
+        _setup.AddChild(solo);
         var hostRow = new HBoxContainer();
         hostRow.AddChild(UiKit.Button("Héberger une partie", Host, 300, 42));
         hostRow.AddChild(new Label { Text = "  " + Loc.T("port") });
@@ -124,7 +136,8 @@ public partial class TitleScreen : Control
         _lobby.AddChild(_lobbyInfo);
         _players = UiKit.Text("", 18);
         _lobby.AddChild(_players);
-        _start = UiKit.Button("Lancer la partie", StartHostedMatch, 320, 46);
+        _start = UiKit.Button("Lancer la partie", StartHostedMatch, 320, 50);
+        UiKit.MakePrimary(_start);
         _lobby.AddChild(_start);
         _lobby.AddChild(UiKit.Button("Quitter le salon", () => { _session.Leave(); GetTree().ReloadCurrentScene(); }, 320, 38));
 

@@ -1,0 +1,7 @@
+{
+  "name": "chrono-clash-prototype-sprites",
+  "private": true,
+  "description": "Exporte les dessins du prototype HTML (troupes et chefs) en images PNG pour Godot.",
+  "scripts": { "render": "node render.js" },
+  "dependencies": { "@napi-rs/canvas": "^0.1.65", "jsdom": "^25.0.0" }
+}

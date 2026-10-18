@@ -43,6 +43,7 @@ public partial class GameRoot : Node2D
             return;
         }
         _ = GameSettings.Current; // charge et applique les réglages (langue, touches, volumes)
+        GetWindow().Theme = UiKit.CreateTheme(); // style du prototype pour tous les menus et le HUD
         _profile = PlayerProfile.Load();
         _session = new GameSession { Name = "Session" };
         AddChild(_session);

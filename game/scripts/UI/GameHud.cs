@@ -50,12 +50,13 @@ public partial class GameHud : Control
 
     public override void _ExitTree() => _session.EventRaised -= OnEvent;
 
-    private static StyleBoxFlat PanelStyle() => new()
+    private static StyleBoxFlat PanelStyle()
     {
-        BgColor = new Color(0.1f, 0.08f, 0.06f, 0.85f), CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8,
-        CornerRadiusBottomLeft = 8, CornerRadiusBottomRight = 8, ContentMarginLeft = 12, ContentMarginRight = 12,
-        ContentMarginTop = 8, ContentMarginBottom = 8,
-    };
+        var box = UiKit.PanelStyle(0.88f);
+        box.ContentMarginLeft = box.ContentMarginRight = 14;
+        box.ContentMarginTop = box.ContentMarginBottom = 10;
+        return box;
+    }
 
     private void Build()
     {
@@ -65,7 +66,9 @@ public partial class GameHud : Control
         var lines = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         _panel.AddChild(lines);
         _resources = new Label();
-        _resources.AddThemeFontSizeOverride("font_size", 20);
+        _resources.AddThemeFontSizeOverride("font_size", 24);
+        if (UiKit.TitleFont != null) _resources.AddThemeFontOverride("font", UiKit.TitleFont);
+        _resources.AddThemeColorOverride("font_color", UiKit.Gold);
         _troops = new Label();
         lines.AddChild(_resources);
         lines.AddChild(_troops);
@@ -118,7 +121,8 @@ public partial class GameHud : Control
 
         // ---- Grandes annonces (changement d'ère, élimination…) ----
         _announce = new Label { HorizontalAlignment = HorizontalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
-        _announce.AddThemeFontSizeOverride("font_size", 36);
+        _announce.AddThemeFontSizeOverride("font_size", 46);
+        if (UiKit.TitleFont != null) _announce.AddThemeFontOverride("font", UiKit.TitleFont);
         _announce.AddThemeColorOverride("font_color", new Color(1f, 0.88f, 0.5f));
         _announce.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.9f));
         _announce.AddThemeConstantOverride("outline_size", 8);

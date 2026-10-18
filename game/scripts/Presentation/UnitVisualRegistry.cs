@@ -17,7 +17,8 @@ public sealed class UnitVisualRegistry
     private readonly Dictionary<(TroopKind, int), (Texture2D? Body, Texture2D? Team)> _cache = new();
 
     /// <summary>Taille à l'écran (en pixels du monde, zoom 1) de la plus grande dimension de l'image.</summary>
-    public static float WorldSizeOf(TroopKind kind) => kind == TroopKind.Tank ? 46 : 22;
+    /// Images du prototype (tools/prototype-sprites) : 96 px = 46 px du monde pour les troupes à pied, 128 px = 64 px pour les tanks.
+    public static float WorldSizeOf(TroopKind kind) => kind == TroopKind.Tank ? 64 : 46;
 
     public static string FilePrefix(TroopKind kind) => kind switch
     {
@@ -37,7 +38,8 @@ public sealed class UnitVisualRegistry
     }
 
     /// <summary>Taille à l'écran d'un chef selon l'ère (les chefs à cheval et la jeep sont plus grands).</summary>
-    public static float ChiefWorldSize(int era) => era switch { 2 or 3 => 48, 5 => 56, 7 => 44, _ => 40 };
+    /// Images du prototype : 128 px = 72 px du monde, pour tous les chefs (le cadre inclut les chevaux, la jeep, les armes).
+    public static float ChiefWorldSize(int era) => 72;
 
     /// <summary>Images du chef d'une ère : res://assets/art/chiefs/chief_<ère>.png (+ _team).</summary>
     public (Texture2D? Body, Texture2D? Team) GetChief(int era)

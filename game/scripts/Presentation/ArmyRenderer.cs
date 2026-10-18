@@ -130,7 +130,7 @@ public partial class ArmyRenderer : Node2D
         {
             // Image du graphiste (art/chiefs/chief_<ère>.png, ou celle du soldat pour un chef promu).
             var size = image.GetSize();
-            float target = g.Promoted ? UnitVisualRegistry.WorldSizeOf(g.HeirKind) * 1.2f : UnitVisualRegistry.ChiefWorldSize(g.Era);
+            float target = g.Promoted ? UnitVisualRegistry.WorldSizeOf(g.HeirKind) * 1.25f : UnitVisualRegistry.ChiefWorldSize(g.Era);
             float scale = target / Mathf.Max(size.X, size.Y);
             var rect = new Rect2(-size * scale / 2, size * scale);
             DrawTextureRect(image, rect, false);

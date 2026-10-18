@@ -18,3 +18,7 @@ Thumbs.db
 
 # Exports du jeu
 build/
+
+# Outil d'export des dessins du prototype
+tools/prototype-sprites/node_modules/
+tools/prototype-sprites/out/
